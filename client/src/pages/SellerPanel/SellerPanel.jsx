@@ -96,7 +96,7 @@ export default function SellerPanel() {
     };
 
     checkStoreStatus();
-  }, []);
+  }, [productdet,orders]); // No dependencies here to ensure it runs once on component mount or login
 
   useEffect(() => {
     const loggeduserDetails = async () => {
@@ -139,7 +139,7 @@ export default function SellerPanel() {
       }
       fetchstoredetails();
     };
-  }, []);
+  }, [storeDetails]);
 
   const handleUpdateStore = async () => {
     try {
@@ -343,26 +343,30 @@ export default function SellerPanel() {
     }));
   };
 
-  const fetchProduct = async () => {
-    try {
-      const userData = JSON.parse(localStorage.getItem("userData"));
-      const response = await axios.get(
-        "http://localhost:5000/api/product/inventory",
-        {
-          headers: {
-            Authorization: `Bearer ${userData.token}`,
-          },
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const userData = JSON.parse(localStorage.getItem("userData"));
+        const response = await axios.get(
+          "http://localhost:5000/api/product/inventory",
+          {
+            headers: {
+              Authorization: `Bearer ${userData.token}`,
+            },
+          }
+        );
+        if (!response) {
+          console.log("Error:", response.data.message);
         }
-      );
-      if (!response) {
-        console.log("Error:", response.data.message);
-      }
 
-      setProducts(response.data.data);
-    } catch (error) {
-      console.log("Error Fetching Products", error);
-    }
-  };
+        setProducts(response.data.data);
+      } catch (error) {
+        console.log("Error Fetching Products", error);
+      }
+    };
+
+    fetchProduct();
+  }, [products,productdet]);
 
   const [image, setImage] = useState("");
   const handleImageChange = async (image) => {
@@ -418,7 +422,6 @@ export default function SellerPanel() {
 
       setAddProductModal(false);
       alert(response.data.message);
-      fetchProduct();
       setProductDet({
         name: "",
         prod_img: "",
@@ -436,9 +439,6 @@ export default function SellerPanel() {
       );
     }
   };
-  useEffect(() => {
-    fetchProduct();
-  },[productdet]);
 
   const handleDeleteProduct = async (productId) => {
     try {
@@ -456,7 +456,6 @@ export default function SellerPanel() {
         console.log(response.data.message);
       }
       alert(response.data.message);
-      fetchProduct();
     } catch (error) {
       console.log("Internal Server Error", error);
     }
@@ -478,7 +477,6 @@ export default function SellerPanel() {
       setEditingProductId(productId);
       setIsEditing(true); // Set the editing state to true
       setAddProductModal(true); // Open the modal
-      fetchProduct();
     }
   };
 
@@ -570,7 +568,6 @@ export default function SellerPanel() {
         alert(response.data.message);
       } else {
         alert(response.data.message);
-        fetchOrders();
         console.log("Order Deleted Successfully.");
       }
     } catch (error) {
@@ -579,34 +576,34 @@ export default function SellerPanel() {
     }
   };
 
-  const fetchOrders = async () => {
-    try {
-      const userData = JSON.parse(localStorage.getItem("userData"));
-      const response = await axios.get(
-        "http://localhost:5000/api/product/orders/summary",
-        {
-          headers: {
-            Authorization: `Bearer ${userData.token}`,
-          },
-        }
-      );
-
-      if (!response) {
-        console.log(response.data.message);
-      } else {
-        setOrders(response.data.data);
-        setTotalOrders(response.data.total);
-        setPendingOrders(response.data.pending);
-        setCompletedOrders(response.data.completed);
-      }
-    } catch (error) {
-      console.log("Error while fetching Orders:", error);
-    }
-  };
-
   useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const userData = JSON.parse(localStorage.getItem("userData"));
+        const response = await axios.get(
+          "http://localhost:5000/api/product/orders/summary",
+          {
+            headers: {
+              Authorization: `Bearer ${userData.token}`,
+            },
+          }
+        );
+
+        if (!response) {
+          console.log(response.data.message);
+        } else {
+          setOrders(response.data.data);
+          setTotalOrders(response.data.total);
+          setPendingOrders(response.data.pending);
+          setCompletedOrders(response.data.completed);
+        }
+      } catch (error) {
+        console.log("Error while fetching Orders:", error);
+      }
+    };
+
     fetchOrders();
-  }, [orders]);
+  }, [orders]); // Add dependencies here
 
   const handleStatusChange = async (orderId, status) => {
     try {
@@ -622,7 +619,6 @@ export default function SellerPanel() {
       );
       console.log("Order status updated:", response.data);
       alert(response.data.message);
-      fetchOrders();
     } catch (error) {
       console.error("Error updating order status:", error);
     }
