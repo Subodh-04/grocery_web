@@ -280,12 +280,12 @@ export default function SellerPanel() {
       alert(response.data.message);
       setUserDetails({
         ...userDetails,
-        currentPassword:"",
-        newPassword:"",
-    })
-      console.log("password updated successfully",response.data);
+        currentPassword: "",
+        newPassword: "",
+      });
+      console.log("password updated successfully", response.data);
     } catch (error) {
-      console.log("Error while updating Password:",error);
+      console.log("Error while updating Password:", error);
     }
   };
 
@@ -448,11 +448,10 @@ export default function SellerPanel() {
           },
         }
       );
-      if (!response) {
+      if (response.data.success === true) {
         alert(response.data.message);
-        console.log("Error while Deleting :", response.data);
+        console.log(response.data.message);
       }
-      console.log("deleted Successfully");
       alert(response.data.message);
     } catch (error) {
       console.log("Internal Server Error", error);
@@ -566,6 +565,7 @@ export default function SellerPanel() {
         alert(response.data.message);
       } else {
         alert(response.data.message);
+        fetchOrders();
         console.log("Order Deleted Successfully.");
       }
     } catch (error) {
@@ -574,44 +574,54 @@ export default function SellerPanel() {
     }
   };
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const userData = JSON.parse(localStorage.getItem("userData"));
-        const response = await axios.get(
-          "http://localhost:5000/api/product/orders/summary",
-          {
-            headers: {
-              Authorization: `Bearer ${userData.token}`,
-            },
-          }
-        );
-
-        if (!response) {
-          console.log(response.data.message);
-        } else {
-          setOrders(response.data.data);
-          setTotalOrders(response.data.total);
-          setPendingOrders(response.data.pending);
-          setCompletedOrders(response.data.completed);
-
-          if (
-            response.data.data.some((order) => order.status === "completed")
-          ) {
-            setTimeout(() => {
-              setOrders((prevOrders) =>
-                prevOrders.filter((order) => order.status !== "completed")
-              );
-            }, 3000);
-          }
+  const fetchOrders = async () => {
+    try {
+      const userData = JSON.parse(localStorage.getItem("userData"));
+      const response = await axios.get(
+        "http://localhost:5000/api/product/orders/summary",
+        {
+          headers: {
+            Authorization: `Bearer ${userData.token}`,
+          },
         }
-      } catch (error) {
-        console.log("Error while fetching Orders:", error);
-      }
-    };
+      );
 
+      if (!response) {
+        console.log(response.data.message);
+      } else {
+        setOrders(response.data.data);
+        setTotalOrders(response.data.total);
+        setPendingOrders(response.data.pending);
+        setCompletedOrders(response.data.completed);
+      }
+    } catch (error) {
+      console.log("Error while fetching Orders:", error);
+    }
+  };
+
+  useEffect(() => {
     fetchOrders();
-  }, []);
+  }, [orders]);
+
+  const handleStatusChange = async (orderId, status) => {
+    try {
+      const userData = JSON.parse(localStorage.getItem("userData"));
+      const response = await axios.put(
+        `http://localhost:5000/api/order/${orderId}`,
+        { status },
+        {
+          headers: {
+            Authorization: `Bearer ${userData.token}`,
+          },
+        }
+      );
+      console.log("Order status updated:", response.data);
+      alert(response.data.message);
+      fetchOrders();
+    } catch (error) {
+      console.error("Error updating order status:", error);
+    }
+  };
 
   const handlePrint = () => {
     const printContents = document.getElementById("invoice-section").innerHTML;
@@ -650,25 +660,6 @@ export default function SellerPanel() {
     printWindow.focus();
     printWindow.print();
     printWindow.close();
-  };
-
-  const handleStatusChange = async (orderId, status) => {
-    try {
-      const userData = JSON.parse(localStorage.getItem("userData"));
-      const response = await axios.put(
-        `http://localhost:5000/api/order/${orderId}`,
-        { status },
-        {
-          headers: {
-            Authorization: `Bearer ${userData.token}`,
-          },
-        }
-      );
-      console.log("Order status updated:", response.data);
-      alert(response.data.message);
-    } catch (error) {
-      console.error("Error updating order status:", error);
-    }
   };
 
   return (
@@ -1561,10 +1552,12 @@ export default function SellerPanel() {
                                           {viewDetails.product.productName}
                                         </td>
                                         <td>
-                                          ${viewDetails.product.productPrice}
+                                          {viewDetails.product.productPrice}
                                         </td>
                                         <td>{viewDetails.quantity}</td>
-                                        <td>${viewDetails.totalAmount}</td>
+                                        <td>
+                                          {viewDetails.totalAmount}&#8377;
+                                        </td>
                                       </tr>
                                       {/* Add more rows as necessary */}
                                     </tbody>
@@ -1577,21 +1570,16 @@ export default function SellerPanel() {
                                 <div className="col">
                                   <div className="text-end">
                                     <p className="mb-1">
-                                      <strong>Sub Total:</strong> $
-                                      {viewDetails.totalAmount}
+                                      <strong>Sub Total:</strong>
+                                      {viewDetails.totalAmount}&#8377;
                                     </p>
                                     <p className="mb-1">
-                                      <strong>Discount:</strong> -$25.50
-                                    </p>
-                                    <p className="mb-1">
-                                      <strong>Shipping Charge:</strong> $20.00
-                                    </p>
-                                    <p className="mb-1">
-                                      <strong>Tax:</strong> $12.00
+                                      <strong>Delivery Cost:</strong>{" "}
+                                      {viewDetails.deliveryCost}&#8377;
                                     </p>
                                     <h4 className="mt-2">
-                                      <strong>Total:</strong> $
-                                      {viewDetails.totalAmount}
+                                      <strong>Total:</strong>
+                                      {viewDetails.totalAmount}&#8377;
                                     </h4>
                                   </div>
                                 </div>

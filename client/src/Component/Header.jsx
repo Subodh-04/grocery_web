@@ -18,7 +18,7 @@ const Header = () => {
   return (
     <div>
       <>
-        <div className="border-bottom pb-5">
+        <div className="border-bottom">
           <div className="bg-light py-1">
             <div className="container">
               <div className="row">
@@ -232,7 +232,7 @@ const Header = () => {
             />
           </Link>
           <input
-            className="form-control responsivesearch "
+            className="form-control responsivesearch me-4"
             list="datalistOptions"
             id="exampleDataList"
             placeholder="Type to search..."

@@ -56,7 +56,6 @@ const MyAccountOrder = () => {
     }
   };
 
-  
   const handlePrint = () => {
     const printContents = document.getElementById("invoice-section").innerHTML;
 
@@ -204,9 +203,9 @@ const MyAccountOrder = () => {
                               <td className="align-middle border-top-0">
                                 <span
                                   className={`badge ${
-                                    order.status === "Completed"
+                                    order.status === "completed"
                                       ? "bg-success"
-                                      : order.status === "Processing"
+                                      : order.status === "pending"
                                       ? "bg-warning"
                                       : "bg-danger"
                                   }`}
@@ -218,9 +217,15 @@ const MyAccountOrder = () => {
                                 {order.totalAmount}&#8377;
                               </td>
                               <td className="align-middle border-top-0">
-                                <button className="btn btn-success" onClick={() =>handleViewOrderDetails(order.orderId)}>
-                                <IoMdDownload />
-                                Download</button>
+                                <button
+                                  className="btn btn-success"
+                                  onClick={() =>
+                                    handleViewOrderDetails(order.orderId)
+                                  }
+                                >
+                                  <IoMdDownload />
+                                  Download
+                                </button>
                               </td>
                             </tr>
                           ))}
@@ -235,152 +240,138 @@ const MyAccountOrder = () => {
         </div>
       </section>
       {viewDetailsModal && viewDetails && (
-                    <div className="modal show d-block" tabIndex="-1">
-                      <div className="modal-dialog modal-lg">
-                        <div className="modal-content">
-                          <div className="modal-header">
-                            <h5 className="modal-title">
-                              Invoice #{viewDetails.orderId}
-                            </h5>
-                            <button
-                              type="button"
-                              className="btn-close"
-                              onClick={() => setViewDetailsModal(false)}
-                            ></button>
-                          </div>
-                          <div className="modal-body">
-                            <div id="invoice-section" className="container">
-                              {/* Invoice Header */}
-                              <div className="row mb-4">
-                                <div className="col">
-                                  <h5 className="mb-1">
-                                    {viewDetails.product.store.storeName}
-                                  </h5>
-                                  <p className="text-muted mb-0">
-                                    {viewDetails.product.store.storeLocation}
-                                  </p>
-                                  <p className="text-muted mb-0">xyz@987.com</p>
-                                  <p className="text-muted mb-0">
-                                    012-345-6789
-                                  </p>
-                                </div>
-                                <div className="col text-end">
-                                  <h6 className="text-muted">
-                                    Invoice Date: {viewDetails.orderDate}
-                                  </h6>
-                                  <h6 className="text-muted">
-                                    Order No: #1123456
-                                  </h6>
-                                  <h6 className="text-muted">
-                                    Invoice No: #{viewDetails.orderId}
-                                  </h6>
-                                  <h6 className="text-muted">
-                                    Status:{" "}
-                                    <span className="badge bg-success">
-                                      Paid
-                                    </span>
-                                  </h6>
-                                </div>
-                              </div>
+        <div className="modal show d-block" tabIndex="-1">
+          <div className="modal-dialog modal-lg">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Invoice #{viewDetails.orderId}</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setViewDetailsModal(false)}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <div id="invoice-section" className="container">
+                  {/* Invoice Header */}
+                  <div className="row mb-4">
+                    <div className="col">
+                      <h5 className="mb-1">
+                        {viewDetails.product.store.storeName}
+                      </h5>
+                      <p className="text-muted mb-0">
+                        {viewDetails.product.store.storeLocation}
+                      </p>
+                      <p className="text-muted mb-0">xyz@987.com</p>
+                      <p className="text-muted mb-0">012-345-6789</p>
+                    </div>
+                    <div className="col text-end">
+                      <h6 className="text-muted">
+                        Invoice Date: {viewDetails.orderDate}
+                      </h6>
+                      <h6 className="text-muted">Order No: #1123456</h6>
+                      <h6 className="text-muted">
+                        Invoice No: #{viewDetails.orderId}
+                      </h6>
+                      <h6 className="text-muted">
+                        Status: <span className="badge bg-success">Paid</span>
+                      </h6>
+                    </div>
+                  </div>
 
-                              {/* Buyer Information */}
-                              <div className="row mb-4">
-                                <div className="col">
-                                  <h6>Billed To:</h6>
-                                  <p className="text-muted">
-                                    <strong>
-                                      {viewDetails.buyer.customerName}
-                                    </strong>
-                                  </p>
-                                  <p className="text-muted mb-0">
-                                    {viewDetails.buyer.email}
-                                  </p>
-                                  <p className="text-muted mb-0">
-                                    {viewDetails.buyer.phone}
-                                  </p>
-                                  <p className="text-muted mb-0">
-                                    {viewDetails.buyer.address.street}
-                                  </p>
-                                  <p className="text-muted mb-0">
-                                    {viewDetails.buyer.address.city},{" "}
-                                    {viewDetails.buyer.address.state},{" "}
-                                    {viewDetails.buyer.address.zip}
-                                  </p>
-                                </div>
-                              </div>
+                  {/* Buyer Information */}
+                  <div className="row mb-4">
+                    <div className="col">
+                      <h6>Billed To:</h6>
+                      <p className="text-muted">
+                        <strong>{viewDetails.buyer.customerName}</strong>
+                      </p>
+                      <p className="text-muted mb-0">
+                        {viewDetails.buyer.email}
+                      </p>
+                      <p className="text-muted mb-0">
+                        {viewDetails.buyer.phone}
+                      </p>
+                      <p className="text-muted mb-0">
+                        {viewDetails.buyer.address.street}
+                      </p>
+                      <p className="text-muted mb-0">
+                        {viewDetails.buyer.address.city},{" "}
+                        {viewDetails.buyer.address.state},{" "}
+                        {viewDetails.buyer.address.zip}
+                      </p>
+                    </div>
+                  </div>
 
-                              {/* Order Summary */}
-                              <div className="row mb-4">
-                                <div className="col">
-                                  <h6>Order Summary</h6>
-                                  <table className="table table-bordered">
-                                    <thead>
-                                      <tr>
-                                        <th>No.</th>
-                                        <th>Item</th>
-                                        <th>Price</th>
-                                        <th>Quantity</th>
-                                        <th>Total</th>
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      <tr>
-                                        <td>01</td>
-                                        <td>
-                                          {viewDetails.product.productName}
-                                        </td>
-                                        <td>
-                                          {viewDetails.product.productPrice}
-                                        </td>
-                                        <td>{viewDetails.quantity}</td>
-                                        <td>{viewDetails.totalAmount}&#8377;</td>
-                                      </tr>
-                                      {/* Add more rows as necessary */}
-                                    </tbody>
-                                  </table>
-                                </div>
-                              </div>
+                  {/* Order Summary */}
+                  <div className="row mb-4">
+                    <div className="col">
+                      <h6>Order Summary</h6>
+                      <table className="table table-bordered">
+                        <thead>
+                          <tr>
+                            <th>No.</th>
+                            <th>Item</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                            <th>Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>01</td>
+                            <td>{viewDetails.product.productName}</td>
+                            <td>{viewDetails.product.productPrice}</td>
+                            <td>{viewDetails.quantity}</td>
+                            <td>{viewDetails.totalAmount}&#8377;</td>
+                          </tr>
+                          {/* Add more rows as necessary */}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
 
-                              {/* Total Calculation */}
-                              <div className="row mb-4">
-                                <div className="col">
-                                  <div className="text-end">
-                                    <p className="mb-1">
-                                      <strong>Sub Total:</strong> 
-                                      {viewDetails.totalAmount}&#8377;
-                                    </p>
-                                    <p className="mb-1">
-                                      <strong>Delivery Cost:</strong> {viewDetails.deliveryCost}&#8377;
-                                    </p>
-                                    <h4 className="mt-2">
-                                      <strong>Total:</strong> 
-                                      {viewDetails.totalAmount}&#8377;
-                                    </h4>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="modal-footer">
-                            <button
-                              type="button"
-                              className="btn btn-secondary"
-                              onClick={() => setViewDetailsModal(false)}
-                            >
-                              Close
-                            </button>
-                            <button
-                              type="button"
-                              className="btn btn-success"
-                              onClick={handlePrint}
-                            >
-                              Print <i className="fa fa-print"></i>
-                            </button>
-                          </div>
-                        </div>
+                  {/* Total Calculation */}
+                  <div className="row mb-4">
+                    <div className="col">
+                      <div className="text-end">
+                        <p className="mb-1">
+                          <strong>Sub Total:</strong>
+                          {viewDetails.totalAmount}&#8377;
+                        </p>
+                        <p className="mb-1">
+                          <strong>Delivery Cost:</strong>{" "}
+                          {viewDetails.deliveryCost}&#8377;
+                        </p>
+                        <h4 className="mt-2">
+                          <strong>Total:</strong>
+                          {viewDetails.totalAmount}&#8377;
+                        </h4>
                       </div>
                     </div>
-                  )}
+                  </div>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setViewDetailsModal(false)}
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-success"
+                  onClick={handlePrint}
+                >
+                  Print <i className="fa fa-print"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

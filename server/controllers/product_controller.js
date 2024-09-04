@@ -31,11 +31,9 @@ const addProduct = async (req, res) => {
 
     const storeExists = await Store.findOne({ _id: store, seller });
     if (!storeExists) {
-      return res
-        .status(400)
-        .json({
-          message: "Invalid store or store does not belong to the seller",
-        });
+      return res.status(400).json({
+        message: "Invalid store or store does not belong to the seller",
+      });
     }
 
     const newProduct = new Product({
@@ -104,15 +102,29 @@ const updateProduct = async (req, res) => {
 const deleteProduct = async (req, res) => {
   const { productId } = req.params;
   try {
-    await Product.findByIdAndDelete(productId);
-    res.status(200).json({ success: true, message: "Product deleted" });
+    const hasOrders = await Order.find({ product: productId });
+    if (hasOrders.length > 0) {
+      return res
+        .status(201)
+        .json({
+          success: false,
+          message:
+            "Cannot delete the product as there are pending orders for this product.",
+        });
+    }
+    const deletedProduct = await Product.findByIdAndDelete(productId);
+    if (!deletedProduct) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+    res.status(200).json({ success: true, message: "Product deleted successfully" });
   } catch (error) {
-    console.error(error);
+    console.log("Error deleting product:", error);
     res
       .status(500)
-      .json({ success: false, message: "Failed to delete product" });
+      .json({ success: false, message: "Failed to delete product due to an internal error" });
   }
 };
+
 
 const checkInventory = async (req, res) => {
   try {
@@ -171,16 +183,20 @@ const getOrderSummary = async (req, res) => {
         store: {
           storeId: order.product.store ? order.product.store._id : null,
           storeName: order.product.store ? order.product.store.storeName : null,
-          storeLocation: order.product.store ? order.product.store.storeLocation : null,
+          storeLocation: order.product.store
+            ? order.product.store.storeLocation
+            : null,
         },
       },
-      buyer: order.customer ? {
-        customerId: order.customer._id,
-        customerName: order.customer.userName,
-        email: order.customer.email,
-        phone: order.customer.phone,
-        address: order.customer.address,
-      } : null,
+      buyer: order.customer
+        ? {
+            customerId: order.customer._id,
+            customerName: order.customer.userName,
+            email: order.customer.email,
+            phone: order.customer.phone,
+            address: order.customer.address,
+          }
+        : null,
       status: order.status,
       quantity: order.quantity,
       totalAmount: order.totalAmount,
@@ -196,10 +212,11 @@ const getOrderSummary = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching order summary:", error);
-    res.status(500).json({ success: false, message: "Failed to get order summary" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to get order summary" });
   }
 };
-
 
 const getOrderDetails = async (req, res) => {
   try {
@@ -216,7 +233,7 @@ const getOrderDetails = async (req, res) => {
     };
 
     // Find the order by ID and populate related data (product, customer, and store)
-    const order = await Order.findOne({ _id: orderId})
+    const order = await Order.findOne({ _id: orderId })
       .populate({
         path: "product",
         populate: {
@@ -257,16 +274,15 @@ const getOrderDetails = async (req, res) => {
       },
       status: order.status,
       quantity: order.quantity,
-      productPrice:order.productPrice,
-      deliveryCost:order.DeliveryCost,
+      productPrice: order.productPrice,
+      deliveryCost: order.DeliveryCost,
       totalAmount: order.totalAmount,
       orderDate: formatDate(order.createdAt),
     };
 
     // Send the response
     console.log(orderDetails);
-    
-    
+
     res.status(200).json({ success: true, data: orderDetails });
   } catch (error) {
     console.error(error);
