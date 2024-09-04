@@ -125,18 +125,20 @@ export default function SellerPanel() {
   useEffect(() => {
     const fetchstoredetails = async () => {
       const userData = JSON.parse(localStorage.getItem("userData"));
-      const storeres = await axios.get(
-        `http://localhost:5000/api/store/${userData.store}`,
-        {
-          headers: {
-            Authorization: `Bearer ${userData.token}`,
-          },
-        }
-      );
+      if (hasStore === true) {
+        const storeres = await axios.get(
+          `http://localhost:5000/api/store/${userData.store}`,
+          {
+            headers: {
+              Authorization: `Bearer ${userData.token}`,
+            },
+          }
+        );
 
-      setStoreDetails(storeres.data.data);
+        setStoreDetails(storeres.data.data);
+      }
+      fetchstoredetails();
     };
-    fetchstoredetails();
   }, []);
 
   const handleUpdateStore = async () => {
@@ -341,29 +343,26 @@ export default function SellerPanel() {
     }));
   };
 
-  useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        const userData = JSON.parse(localStorage.getItem("userData"));
-        const response = await axios.get(
-          "http://localhost:5000/api/product/inventory",
-          {
-            headers: {
-              Authorization: `Bearer ${userData.token}`,
-            },
-          }
-        );
-        if (!response) {
-          console.log("Error:", response.data.message);
+  const fetchProduct = async () => {
+    try {
+      const userData = JSON.parse(localStorage.getItem("userData"));
+      const response = await axios.get(
+        "http://localhost:5000/api/product/inventory",
+        {
+          headers: {
+            Authorization: `Bearer ${userData.token}`,
+          },
         }
-
-        setProducts(response.data.data);
-      } catch (error) {
-        console.log("Error Fetching Products", error);
+      );
+      if (!response) {
+        console.log("Error:", response.data.message);
       }
-    };
-    fetchProduct();
-  }, [productdet]);
+
+      setProducts(response.data.data);
+    } catch (error) {
+      console.log("Error Fetching Products", error);
+    }
+  };
 
   const [image, setImage] = useState("");
   const handleImageChange = async (image) => {
@@ -419,6 +418,7 @@ export default function SellerPanel() {
 
       setAddProductModal(false);
       alert(response.data.message);
+      fetchProduct();
       setProductDet({
         name: "",
         prod_img: "",
@@ -436,6 +436,9 @@ export default function SellerPanel() {
       );
     }
   };
+  useEffect(() => {
+    fetchProduct();
+  },[productdet]);
 
   const handleDeleteProduct = async (productId) => {
     try {
@@ -453,6 +456,7 @@ export default function SellerPanel() {
         console.log(response.data.message);
       }
       alert(response.data.message);
+      fetchProduct();
     } catch (error) {
       console.log("Internal Server Error", error);
     }
@@ -474,6 +478,7 @@ export default function SellerPanel() {
       setEditingProductId(productId);
       setIsEditing(true); // Set the editing state to true
       setAddProductModal(true); // Open the modal
+      fetchProduct();
     }
   };
 
@@ -669,7 +674,7 @@ export default function SellerPanel() {
           <div className="flex-grow-1">
             <ul className="nav flex-column">
               <li className="nav-item mb-4">
-                <h2 className="fw-bold">FresFinds</h2>
+                <h2 className="fw-bold">FreshFinds</h2>
               </li>
               <li className="nav-item">
                 <Link

@@ -186,8 +186,9 @@ const updateOrderStatus = async (req, res) => {
       orderId,
       { status },
       { new: true }
-    );
-
+    ).populate("customer");
+    console.log(updatedOrder);
+    
     if (!updatedOrder) {
       return res.status(404).json({ error: "Order not found" });
     }
@@ -196,9 +197,9 @@ const updateOrderStatus = async (req, res) => {
       .status(200)
       .send({ message: "Order Status Updated Successfully", updatedOrder });
     await sendEmail(
-      req.user.email,
+      updatedOrder.customer.email,
       "Order Status Updated - FreshFinds",
-      orderStatusUpdateEmailContent(req.user, updatedOrder, status)
+      orderStatusUpdateEmailContent(updatedOrder.customer, updatedOrder, status)
     );
   } catch (error) {
     console.error(error);

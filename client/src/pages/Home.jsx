@@ -388,11 +388,11 @@ const Home = () => {
                               className="img-fluid rounded-3 w-100"
                             />
                             <div className="banner-text">
-                              <h3 className="mb-0 fw-bold">
+                              <h3 className="mb-2 fw-bold">
                                 10% cashback on <br />
                                 personal care{" "}
                               </h3>
-                              <div className="mt-4 mb-5 fs-5">
+                              <div className="fs-5">
                                 <p className="mb-0">Max cashback: $12</p>
                                 <span>
                                   Code:{" "}
@@ -401,7 +401,7 @@ const Home = () => {
                                   </span>
                                 </span>
                               </div>
-                              <Link to="#" className="btn btn-dark">
+                              <Link to="#" className="btn btn-dark mt-2">
                                 Shop Now
                               </Link>
                             </div>
@@ -424,7 +424,7 @@ const Home = () => {
                             />
                             <div className="banner-text">
                               {/* Banner Content */}
-                              <h3 className=" fw-bold mb-2">
+                              <h3 className=" fw-bold mb-1">
                                 Say yes to <br />
                                 season’s fresh{" "}
                               </h3>
@@ -432,7 +432,7 @@ const Home = () => {
                                 Refresh your day <br />
                                 the fruity way
                               </p>
-                              <Link to="#" className="btn btn-dark mt-2">
+                              <Link to="#" className="btn btn-dark mt-1">
                                 Shop Now
                               </Link>
                             </div>
