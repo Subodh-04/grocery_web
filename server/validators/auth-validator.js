@@ -1,7 +1,7 @@
 const { z } = require("zod");
 
-
-const emailRegex = /^[^\s@]{5,40}@[^\s@]+\.[^\s@]+$/;
+const emailRegex = /^(?=.*[a-zA-Z])(?=.*\d)[^\s@]{5,40}@[^\s@]+\.[^\s@]+$/;
+const usernameRegex = /^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z\d]{6,}$/;
 
 const addressSchema = z.object({
   street: z.string({ required_error: "Street is required" }).trim(),
@@ -19,12 +19,8 @@ const deliverySlotSchema = z.object({
 
 const storeSchema = z.object({
   storeName: z.string({ required_error: "Store Name is required" }).trim(),
-  storeLocation: z
-    .string({ required_error: "Store Location is required" })
-    .trim(),
-  deliveryOptions: z
-    .string({ required_error: "Delivery Options are required" })
-    .trim(),
+  storeLocation: z.string({ required_error: "Store Location is required" }).trim(),
+  deliveryOptions: z.string({ required_error: "Delivery Options are required" }).trim(),
   proximity: z.string().optional(),
   categories: z.string().optional(),
   deliverySlots: z.array(deliverySlotSchema).optional(),
@@ -37,10 +33,8 @@ const loginSchema = z.object({
     .trim()
     .regex(emailRegex, {
       message:
-        "Email must have between 5 and 40 characters before the @ symbol and must be a valid email format",
+        "Email must contain both letters and numbers, have between 5 and 40 characters before the @ symbol, and be a valid email format",
     })
-    .min(5, { message: "Email must be at least 5 characters" })
-    .max(40,{ message: "Too long!! Reduce the characters!" })
     .email({ message: "Invalid Email Address" }),
   password: z
     .string({ required_error: "Password is required" })
@@ -52,7 +46,9 @@ const signupSchema = loginSchema.extend({
   userName: z
     .string({ required_error: "Name is required" })
     .trim()
-    .min(6, { message: "Username must be at least 6 characters" }),
+    .regex(usernameRegex, {
+      message: "Username must contain both letters and numbers and be at least 6 characters long",
+    }),
   phone: z
     .string({ required_error: "Phone is required" })
     .length(10, { message: "Phone number must be 10 digits" }),
