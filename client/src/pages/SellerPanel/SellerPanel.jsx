@@ -32,6 +32,7 @@ export default function SellerPanel() {
   const [showModal, setShowModal] = useState(false);
   const [addproductmodal, setAddProductModal] = useState(false);
   const [products, setProducts] = useState([]);
+  const [totalproducts, setTotalProducts] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
   const [editingProductId, setEditingProductId] = useState(null);
   const [orders, setOrders] = useState([]);
@@ -360,13 +361,14 @@ export default function SellerPanel() {
         }
 
         setProducts(response.data.data);
+        setTotalProducts(response.data.totalProducts);
       } catch (error) {
         console.log("Error Fetching Products", error);
       }
     };
 
     fetchProduct();
-  }, [products,productdet]);
+  }, [products,productdet,totalproducts]);
 
   const [image, setImage] = useState("");
   const handleImageChange = async (image) => {
@@ -661,7 +663,9 @@ export default function SellerPanel() {
     printWindow.print();
     printWindow.close();
   };
-
+  
+  console.log("total :",totalproducts);
+  
   return (
     <div className="container-fluid" style={{ position: "fixed" }}>
       <div className="row">
@@ -821,7 +825,7 @@ export default function SellerPanel() {
                   <div className="row">
                     <div className="col-lg-4 col-md-6 mb-4">
                       <div className="card p-3">
-                        <h5 className="fw-bold">165</h5>
+                        <h5 className="fw-bold">{totalproducts}</h5>
                         <p>All Products</p>
                       </div>
                     </div>
