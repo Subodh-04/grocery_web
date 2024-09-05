@@ -96,7 +96,7 @@ export default function SellerPanel() {
     };
 
     checkStoreStatus();
-  }, [productdet,orders]); // No dependencies here to ensure it runs once on component mount or login
+  }, []); // No dependencies here to ensure it runs once on component mount or login
 
   useEffect(() => {
     const loggeduserDetails = async () => {
@@ -137,10 +137,10 @@ export default function SellerPanel() {
 
         setStoreDetails(storeres.data.data);
       }
-      fetchstoredetails();
     };
-  }, [storeDetails]);
-
+    fetchstoredetails();
+  }, [storeDetails,hasStore]);
+  
   const handleUpdateStore = async () => {
     try {
       const userData = JSON.parse(localStorage.getItem("userData"));
@@ -387,7 +387,6 @@ export default function SellerPanel() {
           data
         );
         setImage(response.data.url.toString());
-        console.log(response.data.url.toString());
       } catch (err) {
         console.error(err);
         alert("Image upload failed. Please try again.");

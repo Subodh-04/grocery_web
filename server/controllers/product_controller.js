@@ -104,32 +104,35 @@ const deleteProduct = async (req, res) => {
   try {
     const hasOrders = await Order.find({ product: productId });
     if (hasOrders.length > 0) {
-      return res
-        .status(201)
-        .json({
-          success: false,
-          message:
-            "Cannot delete the product as there are pending orders for this product.",
-        });
+      return res.status(201).json({
+        success: false,
+        message:
+          "Cannot delete the product as there are pending orders for this product.",
+      });
     }
     const deletedProduct = await Product.findByIdAndDelete(productId);
     if (!deletedProduct) {
       return res.status(404).json({ message: "Product not found" });
     }
-    res.status(200).json({ success: true, message: "Product deleted successfully" });
+    res
+      .status(200)
+      .json({ success: true, message: "Product deleted successfully" });
   } catch (error) {
     console.log("Error deleting product:", error);
     res
       .status(500)
-      .json({ success: false, message: "Failed to delete product due to an internal error" });
+      .json({
+        success: false,
+        message: "Failed to delete product due to an internal error",
+      });
   }
 };
-
 
 const checkInventory = async (req, res) => {
   try {
     const products = await Product.find({ seller: req.user._id });
-    res.status(200).json({ success: true, data: products });
+    const totalProduct=await Product.countDocuments({seller:req.user._id});
+    res.status(200).json({ success: true, totalProducts:totalProduct, data: products });
   } catch (error) {
     console.error(error);
     res
