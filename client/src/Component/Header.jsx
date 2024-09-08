@@ -65,7 +65,7 @@ const Header = () => {
                 aria-haspopup="true"
                 aria-expanded="false"
               >
-                <span class="me-1">
+                <span className="me-1">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="16"
@@ -73,10 +73,10 @@ const Header = () => {
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
-                    stroke-width="1.2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    class="feather feather-grid"
+                    strokeWidth="1.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="feather feather-grid"
                   >
                     <rect x="3" y="3" width="7" height="7"></rect>
                     <rect x="14" y="3" width="7" height="7"></rect>
@@ -135,7 +135,7 @@ const Header = () => {
               className="dropdown-menu sm-menu"
               aria-labelledby="navbarDropdown"
             >
-              <Link class="dropdown-item" to="/Blog">
+              <Link className="dropdown-item" to="/Blog">
                 Blog
               </Link>
               {/* <Link className="dropdown-item" to="pages/blog-single.html">
@@ -230,7 +230,7 @@ const Header = () => {
                   className="dropdown-menu sm-menu"
                   aria-labelledby="navbarDropdown"
                 >
-                  <Link class="dropdown-item" to="pages/blog.html">
+                  <Link className="dropdown-item" to="pages/blog.html">
                     Blog
                   </Link>
                   <div>

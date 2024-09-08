@@ -1,3 +1,4 @@
+const Product = require("../models/productModel");
 const Store = require("../models/storeModel");
 const User = require("../models/userModel");
 
@@ -58,46 +59,58 @@ const createStore = async (req, res) => {
   }
 };
 
-const updateStoreDetails=async(req,res)=>{
-    try {
-        const {storeId}=req.params;
-        const updatedData=req.body;
+const updateStoreDetails = async (req, res) => {
+  try {
+    const { storeId } = req.params;
+    const updatedData = req.body;
 
-        const store=await Store.findByIdAndUpdate(storeId, updatedData,{new:true});
-        if(!store){
-            return res.status(404).send({ message:"Store Doesnt Exist"})
-        }
-        res.status(200).send({success:true,message:"Store Details Updated Successfully",data:store});
-    } catch (error) {
-        console.log("Error Updating Store:", error);
-        res.status(400).send({message:"Internal Server Error"});
+    const store = await Store.findByIdAndUpdate(storeId, updatedData, {
+      new: true,
+    });
+    if (!store) {
+      return res.status(404).send({ message: "Store Doesnt Exist" });
     }
-}
+    res.status(200).send({
+      success: true,
+      message: "Store Details Updated Successfully",
+      data: store,
+    });
+  } catch (error) {
+    console.log("Error Updating Store:", error);
+    res.status(400).send({ message: "Internal Server Error" });
+  }
+};
 
 const getStores = async (req, res) => {
   try {
-    const Stores = await Store.find({}).select('storeName storeLocation proximity deliveryOptions categories seller');
-    const storeCount=await Store.countDocuments();
-    res.status(200).send({TotalStores:storeCount, Stores, });
+    const Stores = await Store.find({}).select(
+      "storeName storeImage storeLocation proximity deliveryOptions categories seller"
+    );
+    const storeCount = await Store.countDocuments();
+    res.status(200).send({ TotalStores: storeCount, Stores });
   } catch (error) {
     console.log("Error Getting Stores", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
-const findStoreById=async(req, res) => {
+const findStoreById = async (req, res) => {
   try {
-    const {storeId}=req.params;
+    const { storeId } = req.params;
 
-    const store=await Store.findById(storeId);
-    if(!store){
-      return res.status(404).send({ message:"Store Doesnt Exists"});
+    const store = await Store.findById(storeId).populate("product");
+    if (!store) {
+      return res.status(404).send({ message: "Store Doesnt Exists" });
     }
 
-    res.status(200).send({message:"store Found",data:store})
+    const products=await Product.find({store:storeId,seller:store.seller});
+    const totalProducts=await Product.countDocuments({store:storeId,seller:store.seller});
+
+    res.status(200).send({ data: store,totalProducts:totalProducts,products });
   } catch (error) {
-    res.status(500).json({message:"Internal server error"})
-    console.log("Error while Finding Store:",error);
+    res.status(500).json({ message: "Internal server error" });
+    console.log("Error while Finding Store:", error);
   }
-}
-module.exports = { createStore, getStores, updateStoreDetails, findStoreById};
+};
+
+module.exports = { createStore, getStores, updateStoreDetails, findStoreById };

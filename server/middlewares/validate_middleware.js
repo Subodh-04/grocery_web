@@ -13,7 +13,6 @@ const validate = (schema) => async (req, res, next) => {
       message,
       extraDetails,
     };
-    console.log(error);
     next(error);
   }
 };

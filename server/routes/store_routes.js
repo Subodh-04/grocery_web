@@ -7,6 +7,6 @@ const router = express.Router();
 router.post("/", protect, authorize("seller"), createStore);
 router.get("/", protect, getStores);
 router.put("/:storeId", protect, authorize("seller"), updateStoreDetails);
-router.get("/:storeId",protect,authorize("seller"),findStoreById);
+router.get("/:storeId",protect,findStoreById);
 
 module.exports = router;

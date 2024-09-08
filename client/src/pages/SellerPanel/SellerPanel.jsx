@@ -12,6 +12,7 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../../App.css";
 import { MagnifyingGlass } from "react-loader-spinner";
+import { RxCross2 } from "react-icons/rx";
 
 export default function SellerPanel() {
   const [activeSection, setActiveSection] = useState("overview");
@@ -23,7 +24,25 @@ export default function SellerPanel() {
     currentPassword: "",
     newPassword: "",
   });
-
+  const [category, setCategory] = useState([]);
+  const handleAddCategory = () => {
+    if (category.trim() !== "") {
+      setStoreDetails({
+        ...storeDetails,
+        categories: [...storeDetails.categories, category.trim()],
+      });
+      setCategory(""); // Clear the input field
+    }
+  };
+  const handleRemoveCategory = (index) => {
+    setStoreDetails((prevState) => ({
+      ...prevState,
+      categories: prevState.categories.filter((_, i) => i !== index),
+    }));
+  };
+  const handleCategoryInputChange = (e) => {
+    setCategory(e.target.value);
+  };
   const handleSectionChange = (section) => {
     setActiveSection(section);
   };
@@ -47,7 +66,7 @@ export default function SellerPanel() {
     storeLocation: "",
     deliveryOptions: "",
     proximity: "",
-    categories: "",
+    categories: [],
     deliverySlots: [],
     pickupAvailable: false,
   });
@@ -140,8 +159,8 @@ export default function SellerPanel() {
       }
     };
     fetchstoredetails();
-  }, [storeDetails,hasStore]);
-  
+  }, [ hasStore]);
+
   const handleUpdateStore = async () => {
     try {
       const userData = JSON.parse(localStorage.getItem("userData"));
@@ -368,7 +387,7 @@ export default function SellerPanel() {
     };
 
     fetchProduct();
-  }, [products,productdet,totalproducts]);
+  }, [products, productdet, totalproducts]);
 
   const [image, setImage] = useState("");
   const handleImageChange = async (image) => {
@@ -663,9 +682,7 @@ export default function SellerPanel() {
     printWindow.print();
     printWindow.close();
   };
-  
-  console.log("total :",totalproducts);
-  
+
   return (
     <div className="container-fluid" style={{ position: "fixed" }}>
       <div className="row">
@@ -1100,7 +1117,7 @@ export default function SellerPanel() {
                       Store Description: A leading supplier of fresh fruits and
                       vegetables.
                     </p>
-                    <p>Store Categories:{storeDetails.categories}</p>
+                    <p>Store Categories:{storeDetails.categories.join(",")}</p>
                     <button
                       className="btn btn-secondary"
                       onClick={() => setShowModal(true)}
@@ -1162,14 +1179,38 @@ export default function SellerPanel() {
                                 >
                                   Categories
                                 </label>
-                                <input
-                                  type="text"
-                                  className="form-control"
-                                  id="categories"
-                                  name="categories"
-                                  value={storeDetails.categories}
-                                  onChange={handleStoreInputChange}
-                                />
+                                <div className="input-group">
+                                  <input
+                                    type="text"
+                                    className="form-control"
+                                    id="categories"
+                                    name="categories"
+                                    value={category}
+                                    onChange={handleCategoryInputChange}
+                                  />
+                                  <button
+                                    type="button"
+                                    className="btn btn-primary"
+                                    onClick={handleAddCategory}
+                                  >
+                                    Add
+                                  </button>
+                                </div>
+                                <ul className="mt-2 d-flex">
+                                  {storeDetails.categories.map((cat, index) => (
+                                    <li
+                                      className="me-2 badge bg-secondary"
+                                      key={index}
+                                    >
+                                      {cat}{" "}
+                                      <RxCross2
+                                        onClick={() =>
+                                          handleRemoveCategory(index)
+                                        }
+                                      />
+                                    </li>
+                                  ))}
+                                </ul>
                               </div>
                             </form>
                           </div>
@@ -1260,14 +1301,33 @@ export default function SellerPanel() {
                         <label htmlFor="categories" className="form-label">
                           Categories
                         </label>
-                        <input
-                          type="text"
-                          className="form-control"
-                          id="categories"
-                          name="categories"
-                          value={storeDetails.categories}
-                          onChange={handleStoreInputChange}
-                        />
+                        <div className="input-group">
+                          <input
+                            type="text"
+                            className="form-control"
+                            id="categories"
+                            name="categories"
+                            value={category}
+                            onChange={handleCategoryInputChange}
+                          />
+                          <button
+                            type="button"
+                            className="btn btn-primary"
+                            onClick={handleAddCategory}
+                          >
+                            Add
+                          </button>
+                        </div>
+                        <ul className="mt-2 d-flex">
+                          {storeDetails.categories.map((cat, index) => (
+                            <li className="me-2 badge bg-secondary" key={index}>
+                              {cat}{" "}
+                              <RxCross2
+                                onClick={() => handleRemoveCategory(index)}
+                              />
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                       <div className="mb-3">
                         <label className="form-label">Delivery Slots</label>

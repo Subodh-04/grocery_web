@@ -1,7 +1,6 @@
 const { z } = require("zod");
 
 const emailRegex = /^(?=.*[a-zA-Z])(?=.*\d)[^\s@]{5,40}@[^\s@]+\.[^\s@]+$/;
-const usernameRegex = /^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z\d]{6,}$/;
 
 const addressSchema = z.object({
   street: z.string({ required_error: "Street is required" }).trim(),
@@ -45,10 +44,7 @@ const loginSchema = z.object({
 const signupSchema = loginSchema.extend({
   userName: z
     .string({ required_error: "Name is required" })
-    .trim()
-    .regex(usernameRegex, {
-      message: "Username must contain both letters and numbers and be at least 6 characters long",
-    }),
+    .trim(),
   phone: z
     .string({ required_error: "Phone is required" })
     .length(10, { message: "Phone number must be 10 digits" }),

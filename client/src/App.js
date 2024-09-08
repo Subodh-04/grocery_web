@@ -55,7 +55,7 @@ const AppContent = () => {
         <Route path="/ShopCart" element={<ShopCart />} />
         {/* Store pages */}
         <Route path="/StoreList" element={<StoreList />} />
-        <Route path="/SingleShop" element={<SingleShop />} />
+        <Route path="/Single-Store/:id" element={<SingleShop />} />
         {/* Accounts pages */}
         <Route path="/MyAccountOrder" element={<MyAccountOrder />} />
         <Route path="/MyAccountSetting" element={<MyAccountSetting />} />

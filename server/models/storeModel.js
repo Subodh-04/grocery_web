@@ -6,6 +6,11 @@ const storeSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    storeImage: {
+      type: String,
+      default:
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR91ItaG-Xgg2G2LlvJT3j2U_Q-AuNfCDY-kA&s",
+    },
     storeLocation: {
       type: String,
       required: true,
@@ -44,6 +49,10 @@ const storeSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+    },
+    product: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Product",
     },
   },
   {
