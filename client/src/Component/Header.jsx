@@ -297,13 +297,13 @@ const Header = () => {
                   </Link>
                   <Link
                     className="dropdown-item"
-                    to="/MyAcconutPaymentMethod"
+                    to="/MyAccountPaymentMethod"
                   >
                     Payment Method
                   </Link>
                   <Link
                     className="dropdown-item"
-                    to="/MyAcconutNotification"
+                    to="/MyAccountNotification"
                   >
                     Notification
                   </Link>

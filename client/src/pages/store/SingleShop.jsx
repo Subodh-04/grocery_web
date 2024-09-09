@@ -24,6 +24,7 @@ const SingleShop = () => {
   const { id } = useParams(); // Extract storeId from the URL
   const handleCategoryClick = (category) => {
     setSelectedcategory(category);
+    setCurrentPage(1);
   };
 
   console.log("Selected Category:", selectedcategory);
@@ -99,13 +100,36 @@ const SingleShop = () => {
     setProducts(sorted); // Update the sorted products in the state
   };
 
+  const handleaddtocart = async (productId) => {
+    try {
+      console.log(productId);
+      
+      const userData = JSON.parse(localStorage.getItem("userData"));
+      const response = await axios.post(
+        "http://localhost:5000/api/order/cart/add",
+        {
+          productId,
+          quantity: 1,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${userData.token}`,
+          },
+        }
+      );
+      alert(response.data.message);
+      console.log(response.data);
+    } catch (error) {
+      console.log("error while adding to cart:", error);
+    }
+  };
+
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
   const currentProducts = products.slice(
     indexOfFirstProduct,
     indexOfLastProduct
   );
-
   // Change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
@@ -348,7 +372,7 @@ const SingleShop = () => {
                                       style={{
                                         width: "100%",
                                         height: "200px",
-                                        objectFit: "cover",
+                                        objectFit: "contain",
                                       }}
                                     />
                                   </Link>
@@ -408,13 +432,13 @@ const SingleShop = () => {
                                     )}
                                   </div>
                                   <div>
-                                    <Link
-                                      to="#!"
+                                    <button
                                       className="btn btn-primary btn-sm"
+                                      onClick={() => handleaddtocart(product._id)}
                                     >
                                       <i className="feather feather-plus"></i>{" "}
                                       Add
-                                    </Link>
+                                    </button>
                                   </div>
                                 </div>
                               </div>

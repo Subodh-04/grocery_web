@@ -59,7 +59,7 @@ const AppContent = () => {
         {/* Accounts pages */}
         <Route path="/MyAccountOrder" element={<MyAccountOrder />} />
         <Route path="/MyAccountSetting" element={<MyAccountSetting />} />
-        <Route path="/MyAcconutNotification" element={<MyAcconutNotification />} />
+        <Route path="/MyAccountNotification" element={<MyAcconutNotification />} />
         <Route path="/MyAccountPaymentMethod" element={<MyAcconutPaymentMethod />} />
         <Route path="/MyAccountAddress" element={<MyAccountAddress />} />
         <Route path="/MyAccountForgetPassword" element={<MyAccountForgetPassword />} />
