@@ -6,6 +6,7 @@ import graphics from "../../images/store-graphics.svg";
 import { MagnifyingGlass } from "react-loader-spinner";
 import ScrollToTop from "../ScrollToTop";
 import axios from "axios";
+import { toast } from "react-toastify";
 const SingleShop = () => {
   // loading
   const [loaderStatus, setLoaderStatus] = useState(true);
@@ -117,7 +118,7 @@ const SingleShop = () => {
           },
         }
       );
-      alert(response.data.message);
+      toast.success(response.data.message);
       console.log(response.data);
     } catch (error) {
       console.log("error while adding to cart:", error);

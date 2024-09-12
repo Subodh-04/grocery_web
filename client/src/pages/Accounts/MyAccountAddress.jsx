@@ -2,21 +2,173 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { MagnifyingGlass } from "react-loader-spinner";
 import ScrollToTop from "../ScrollToTop";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 const MyAccountAddress = () => {
   // loading
   const [loaderStatus, setLoaderStatus] = useState(true);
+  const [address, setAddress] = useState([]);
+  const [editmode, setEditmode] = useState(false);
+  const [formdata, setFormdata] = useState({
+    firstname: "",
+    lastname: "",
+    address1: "",
+    address2: "",
+    city: "",
+    state: "",
+    country: "",
+    zip: "",
+    isdefault: false,
+  });
+
+  const [selectedAddress, setSelectedAddress] = useState([]);
+
+  const handleDeleteClick = (address) => {
+    setSelectedAddress(address);
+  };
+
   useEffect(() => {
     setTimeout(() => {
       setLoaderStatus(false);
     }, 1500);
   }, []);
 
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormdata((prevDetails) => ({
+      ...prevDetails,
+      [name]: value,
+    }));
+  };
+
+  const handleAddAddress = async () => {
+    try {
+      const street = formdata.address1 + " | " + formdata.address2;
+      const name = formdata.firstname + " " + formdata.lastname;
+      const userData = JSON.parse(localStorage.getItem("userData"));
+      const res = await axios.post(
+        "http://localhost:5000/api/auth/user/addAddress",
+        {
+          name: name,
+          street: street,
+          city: formdata.city,
+          state: formdata.state,
+          country: formdata.country,
+          zip: formdata.zip,
+          isdefault: formdata.isdefault,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${userData.token}`,
+          },
+        }
+      );
+      if (!res) {
+        console.log("res:", res.data);
+      }
+      console.log("data:", res.data);
+      setFormdata({
+        firstname: "",
+        lastname: "",
+        address1: "",
+        address2: "",
+        city: "",
+        state: "",
+        country: "",
+        zip: "",
+        isdefault: false,
+      });
+      toast.success(res.data.message);
+    } catch (error) {
+      console.log("error", error);
+    }
+  };
+
+  const handleDeleteAddress = async (addressId) => {
+    const userData = JSON.parse(localStorage.getItem("userData"));
+    const res = await axios.delete(
+      `http://localhost:5000/api/auth/user/delete/${addressId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${userData.token}`,
+        },
+      }
+    );
+    if (!res) {
+      toast.error(res.data.message);
+      console.log(res.data);
+    }
+    toast.success(res.data.message);
+    console.log(res.data);
+  };
+
+  const handleEditAddress = async (addressId) => {
+    try {
+      setEditmode(true);
+      const add = address.find(
+        (addr) => addr._id.toString() === addressId.toString()
+      );
+      console.log(add);
+      const [firstname, lastname] = add.name.split(" ");
+      const [address1, address2] = add.street.split(" | ");
+      setFormdata({
+        firstname: firstname,
+        lastname: lastname,
+        address1: address1,
+        address2: address2,
+        city: add.city,
+        state: add.state,
+        zip: add.zip,
+        country: add.country,
+        isdefault: add.isdefault,
+      });
+      // const userData = JSON.parse(localStorage.getItem("userData"));
+      // const res = await axios.put(
+      //   `http://localhost:5000/api/auth/user/update/${addressId}`,
+      //   { formdata },
+      //   {
+      //     headers: {
+      //       Authorization: `Bearer ${userData.token}`,
+      //     },
+      //   }
+      // );
+      // if (!res) {
+      //   console.log(res.data);
+      // }
+      // alert(res.data.message);
+      // console.log(res.data);
+      // setEditmode(false);
+    } catch (error) {
+      console.log("error:", error);
+    }
+  };
+
+  useEffect(() => {
+    const getAddress = async () => {
+      const userData = JSON.parse(localStorage.getItem("userData"));
+      const res = await axios.get(
+        `http://localhost:5000/api/auth/user/${userData.userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${userData.token}`,
+          },
+        }
+      );
+      if (!res) {
+        toast.error(res.data.message);
+        console.log(res.data);
+      }
+      setAddress(res.data.address);
+    };
+    getAddress();
+  }, [address]);
+
   return (
     <div>
-       <>
-            <ScrollToTop/>
-            </>
+      <>
+        <ScrollToTop />
+      </>
       <>
         <div>
           {/* section */}
@@ -77,14 +229,14 @@ const MyAccountAddress = () => {
                       </li>
                       {/* nav item */}
                       <li className="nav-item">
-                        <Link className="nav-link" to="/MyAcconutPaymentMethod">
+                        <Link className="nav-link" to="/MyAccountPaymentMethod">
                           <i className="fas fa-credit-card me-2" />
                           Payment Method
                         </Link>
                       </li>
                       {/* nav item */}
                       <li className="nav-item">
-                        <Link className="nav-link" to="/MyAcconutNotification">
+                        <Link className="nav-link" to="/MyAccountNotification">
                           <i className="fas fa-bell me-2" />
                           Notification
                         </Link>
@@ -136,99 +288,57 @@ const MyAccountAddress = () => {
                             </Link>
                           </div>
                           <div className="row">
-                            {/* col */}
-                            <div className="col-lg-5 col-xxl-4 col-12 mb-4">
-                              {/* form */}
-                              <div className="border p-6 rounded-3">
-                                <div className="form-check mb-4">
-                                  <input
-                                    className="form-check-input"
-                                    type="radio"
-                                    name="flexRadioDefault"
-                                    id="homeRadio"
-                                    defaultChecked
-                                  />
-                                  <label
-                                    className="form-check-label text-dark fw-semi-bold"
-                                    htmlFor="homeRadio"
-                                  >
-                                    Home
-                                  </label>
-                                </div>
-                                {/* address */}
-                                <p className="mb-6">
-                                  Jitu Chauhan
-                                  <br />
-                                  4450 North Avenue Oakland, <br />
-                                  Nebraska, United States,
-                                  <br />
-                                  402-776-1106
-                                </p>
-                                {/* btn */}
-                                <Link to="#" className="btn btn-info btn-sm">
-                                  Default address
-                                </Link>
-                                <div className="mt-4">
-                                  <Link to="#" className="text-inherit">
-                                    Edit{" "}
-                                  </Link>
-                                  <Link
-                                    to="#"
-                                    className="text-danger ms-3"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#deleteModal"
-                                  >
-                                    Delete
-                                  </Link>
-                                </div>
-                              </div>
-                            </div>
-                            <div className="col-lg-5 col-xxl-4 col-12 mb-4">
-                              {/* input */}
-                              <div className="border p-6 rounded-3">
-                                <div className="form-check mb-4">
-                                  <input
-                                    className="form-check-input"
-                                    type="radio"
-                                    name="flexRadioDefault"
-                                    id="officeRadio"
-                                  />
-                                  <label
-                                    className="form-check-label text-dark fw-semi-bold"
-                                    htmlFor="officeRadio"
-                                  >
-                                    Office
-                                  </label>
-                                </div>
-                                {/* nav item */}
-                                <p className="mb-6">
-                                  Nitu Chauhan
-                                  <br />
-                                  3853 Coal Road <br />
-                                  Tannersville, Pennsylvania, 18372, United
-                                  States <br />
-                                  402-776-1106
-                                </p>
-                                {/* link */}
-                                <Link to="#" className="link-primary">
-                                  Set as Default
-                                </Link>
-                                <div className="mt-4">
-                                  <Link to="#" className="text-inherit">
-                                    Edit{" "}
-                                  </Link>
-                                  {/* btn */}
-                                  <Link
-                                    to="#"
-                                    className="text-danger ms-3"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#deleteModal"
-                                  >
-                                    Delete
-                                  </Link>
+                            {address.map((address, index) => (
+                              <div
+                                key={index}
+                                className="col-lg-5 col-xxl-4 col-12 mb-4"
+                              >
+                                {/* form */}
+                                <div className="border p-6 rounded-3">
+                                  {/* address */}
+                                  <p className="mb-6">
+                                    {address.name}
+                                    <br />
+                                    {address.street}, {address.city},<br />
+                                    {address.state}, {address.zip}
+                                  </p>
+                                  {/* Default Address Button */}
+                                  {address.isdefault ? (
+                                    <Link
+                                      to="#"
+                                      className="btn btn-info btn-sm"
+                                    >
+                                      Default address
+                                    </Link>
+                                  ) : (
+                                    <Link to="#" className="btn  btn-sm">
+                                      Make it Default
+                                    </Link>
+                                  )}
+                                  <div className="mt-4">
+                                    {/* Edit Button */}
+                                    <button
+                                      data-bs-toggle="modal"
+                                      data-bs-target="#addAddressModal"
+                                      className="text-inherit border-0 bg-transparent"
+                                      onClick={() => {
+                                        handleEditAddress(address._id);
+                                      }}
+                                    >
+                                      Edit
+                                    </button>
+                                    <button
+                                      className="text-danger ms-3 border-0 bg-transparent"
+                                      data-bs-toggle="modal"
+                                      data-bs-target="#deleteModal"
+                                      onClick={() => handleDeleteClick(address)}
+                                    >
+                                      Delete
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
+                            ))}
                           </div>
                         </div>
                       </>
@@ -247,7 +357,7 @@ const MyAccountAddress = () => {
             aria-hidden="true"
           >
             <div className="modal-dialog">
-              {/* modal content */}
+              {/*delte  modal content */}
               <div className="modal-content">
                 {/* modal header */}
                 <div className="modal-header">
@@ -263,15 +373,19 @@ const MyAccountAddress = () => {
                 </div>
                 {/* modal body */}
                 <div className="modal-body">
-                  <h6>Are you sure you want to delete this address?</h6>
-                  <p className="mb-6">
-                    Jitu Chauhan
-                    <br />
-                    4450 North Avenue Oakland, <br />
-                    Nebraska, United States,
-                    <br />
-                    402-776-1106
-                  </p>
+                  {selectedAddress ? (
+                    <>
+                      <h6>Are you sure you want to delete this address?</h6>
+                      <p className="mb-6">
+                        {selectedAddress.name}
+                        <br />
+                        {selectedAddress.street}, {selectedAddress.city},<br />
+                        {selectedAddress.state}, {selectedAddress.zip}
+                      </p>
+                    </>
+                  ) : (
+                    <p>Loading...</p>
+                  )}
                 </div>
                 {/* modal footer */}
                 <div className="modal-footer">
@@ -283,7 +397,14 @@ const MyAccountAddress = () => {
                   >
                     Cancel
                   </button>
-                  <button type="button" className="btn btn-danger">
+                  <button
+                    type="button"
+                    className="btn btn-danger"
+                    data-bs-dismiss="modal"
+                    onClick={() => {
+                      handleDeleteAddress(selectedAddress._id);
+                    }}
+                  >
                     Delete
                   </button>
                 </div>
@@ -307,10 +428,12 @@ const MyAccountAddress = () => {
                     <div>
                       {/* heading */}
                       <h5 className="h6 mb-1" id="addAddressModalLabel">
-                        New Shipping Address
+                        {editmode ? "UpdateAddress" : "New Shipping Address"}
                       </h5>
                       <p className="small mb-0">
-                        Add new shipping address for your order delivery.
+                        {editmode
+                          ? "Update Existing Shipping Address"
+                          : " Add new shipping address for your order delivery."}
                       </p>
                     </div>
                     <div>
@@ -333,6 +456,9 @@ const MyAccountAddress = () => {
                         className="form-control"
                         placeholder="First name"
                         aria-label="First name"
+                        name="firstname"
+                        value={formdata.firstname}
+                        onChange={handleInputChange}
                         required
                       />
                     </div>
@@ -344,6 +470,9 @@ const MyAccountAddress = () => {
                         className="form-control"
                         placeholder="Last name"
                         aria-label="Last name"
+                        name="lastname"
+                        value={formdata.lastname}
+                        onChange={handleInputChange}
                         required
                       />
                     </div>
@@ -354,6 +483,9 @@ const MyAccountAddress = () => {
                         type="text"
                         className="form-control"
                         placeholder="Address Line 1"
+                        name="address1"
+                        value={formdata.address1}
+                        onChange={handleInputChange}
                       />
                     </div>
                     {/* col */}
@@ -363,6 +495,9 @@ const MyAccountAddress = () => {
                         type="text"
                         className="form-control"
                         placeholder="Address Line 2"
+                        name="address2"
+                        value={formdata.address2}
+                        onChange={handleInputChange}
                       />
                     </div>
                     {/* col */}
@@ -372,30 +507,32 @@ const MyAccountAddress = () => {
                         type="text"
                         className="form-control"
                         placeholder="City"
+                        name="city"
+                        value={formdata.city}
+                        onChange={handleInputChange}
                       />
                     </div>
                     {/* col */}
                     <div className="col-12">
-                      {/* form select */}
-                      <select className="form-select">
-                        <option selected> India</option>
-                        <option value={1}>UK</option>
-                        <option value={2}>USA</option>
-                        <option value={3}>UAE</option>
-                      </select>
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="State"
+                        name="state"
+                        value={formdata.state}
+                        onChange={handleInputChange}
+                      />
                     </div>
                     {/* col */}
                     <div className="col-12">
-                      {/* form select */}
-                      <select
-                        className="form-select"
-                        aria-label="Default select example"
-                      >
-                        <option selected>Gujarat</option>
-                        <option value={1}>Northern Ireland</option>
-                        <option value={2}> Alaska</option>
-                        <option value={3}>Abu Dhabi</option>
-                      </select>
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Country"
+                        name="country"
+                        value={formdata.country}
+                        onChange={handleInputChange}
+                      />
                     </div>
                     {/* col */}
                     <div className="col-12">
@@ -404,15 +541,9 @@ const MyAccountAddress = () => {
                         type="text"
                         className="form-control"
                         placeholder="Zip Code"
-                      />
-                    </div>
-                    {/* col */}
-                    <div className="col-12">
-                      {/* input */}
-                      <input
-                        type="text"
-                        className="form-control"
-                        placeholder="Business Name"
+                        name="zip"
+                        value={formdata.zip}
+                        onChange={handleInputChange}
                       />
                     </div>
                     {/* col */}
@@ -422,8 +553,15 @@ const MyAccountAddress = () => {
                         <input
                           className="form-check-input"
                           type="checkbox"
-                          defaultValue
                           id="flexCheckDefault"
+                          name="isdefault"
+                          value={formdata.isdefault}
+                          onChange={(e) =>
+                            setFormdata({
+                              ...formdata,
+                              isdefault: e.target.checked,
+                            })
+                          }
                         />
                         <label
                           className="form-check-label"
@@ -442,9 +580,25 @@ const MyAccountAddress = () => {
                       >
                         Cancel
                       </button>
-                      <button className="btn btn-primary" type="button">
-                        Save Address
-                      </button>
+                      {editmode ? (
+                        <button
+                          className="btn btn-primary"
+                          type="button"
+                          data-bs-dismiss="modal"
+                          onClick={handleEditAddress}
+                        >
+                          Edit Address
+                        </button>
+                      ) : (
+                        <button
+                          className="btn btn-primary"
+                          type="button"
+                          data-bs-dismiss="modal"
+                          onClick={handleAddAddress}
+                        >
+                          Save Address
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -500,14 +654,14 @@ const MyAccountAddress = () => {
                 </li>
                 {/* nav item */}
                 <li className="nav-item">
-                  <a className="nav-link" href="/MyAcconutPaymentMethod">
+                  <a className="nav-link" href="/MyAccountPaymentMethod">
                     <i className="fas fa-credit-card me-2" />
                     Payment Method
                   </a>
                 </li>
                 {/* nav item */}
                 <li className="nav-item">
-                  <a className="nav-link" href="/MyAcconutNotification">
+                  <a className="nav-link" href="/MyAccountNotification">
                     <i className="fas fa-bell me-2" />
                     Notification
                   </a>

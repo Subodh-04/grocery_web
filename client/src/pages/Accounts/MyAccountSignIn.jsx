@@ -3,6 +3,7 @@ import signinimage from "../../images/signin-g.svg";
 import { Link, useNavigate } from "react-router-dom";
 import ScrollToTop from "../ScrollToTop";
 import axios from "axios";
+import { toast } from "react-toastify";
 
 const MyAccountSignIn = () => {
   const [formData, setFormData] = useState({
@@ -25,32 +26,35 @@ const MyAccountSignIn = () => {
     try {
       const { email, password } = formData;
 
-      const response = await axios.post("http://localhost:5000/api/auth/login", {
-        email,
-        password,
-      });
+      const response = await axios.post(
+        "http://localhost:5000/api/auth/login",
+        {
+          email,
+          password,
+        }
+      );
+
+      if (!response.data) {
+        toast.error(response.data.message);
+      }
 
       if (response.data) {
         localStorage.setItem("userData", JSON.stringify(response.data));
 
-        alert("Login Successful");
+        toast.success("Login Successful");
 
-        if(response.data.role==="seller"){
+        if (response.data.role === "seller") {
           navigate("/seller-panel");
-        }
-        else if(response.data.role==="admin"){
-          navigate("/admin-panel")
-        }
-        else{
+        } else if (response.data.role === "admin") {
+          navigate("/admin-panel");
+        } else {
           navigate("/Grocery-react/");
         }
-      } else {
-        alert("Invalid Details: " + response.data.message);
       }
     } catch (error) {
       console.log("Login Error:", error.response?.data || error.message);
-      alert(error.response.data.message);
-      alert("Wait till Admin Verifies Your Data")
+      toast.error(error.response.data.message);
+      toast.error(error.response.data.extraDetails);
     }
   };
 
@@ -66,7 +70,9 @@ const MyAccountSignIn = () => {
             <div className="col-12 col-md-6 offset-lg-1 col-lg-4 order-lg-2 order-1">
               <div className="mb-lg-9 mb-5">
                 <h1 className="mb-1 h2 fw-bold">Sign in to FreshCart</h1>
-                <p>Welcome back to FreshCart! Enter your email to get started.</p>
+                <p>
+                  Welcome back to FreshCart! Enter your email to get started.
+                </p>
               </div>
               <form onSubmit={handleSubmit}>
                 <div className="row g-3">

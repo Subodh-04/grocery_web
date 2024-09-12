@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import signupimage from '../../images/signup-g.svg';
+import signupimage from "../../images/signup-g.svg";
 import { Link, useNavigate } from "react-router-dom";
 import ScrollToTop from "../ScrollToTop";
-import axios from 'axios';
+import axios from "axios";
+import { toast } from "react-toastify";
 
 const MyAccountSignUp = () => {
   const [formData, setFormData] = useState({
@@ -10,12 +11,7 @@ const MyAccountSignUp = () => {
     lastName: "",
     email: "",
     phone: "",
-    password:"",
-    address: "",
-    city: "",
-    state: "",
-    zip: "",
-    country: ""
+    password: "",
   });
 
   const navigate = useNavigate();
@@ -23,7 +19,7 @@ const MyAccountSignUp = () => {
   const handleChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.id]: e.target.value
+      [e.target.id]: e.target.value,
     });
   };
 
@@ -31,30 +27,31 @@ const MyAccountSignUp = () => {
     e.preventDefault();
 
     try {
-      const { firstName, lastName, email, phone, password, address, city, state, zip, country } = formData;
+      const { firstName, lastName, email, phone, password } = formData;
 
-      const role=localStorage.getItem("role");
+      const role = localStorage.getItem("role");
       const userName = `${firstName} ${lastName}`;
-      const fullAddress = { street: address, city, state, zip, country };
 
-      const response = await axios.post('http://localhost:5000/api/auth/', {
+      const response = await axios.post("http://localhost:5000/api/auth/", {
         userName,
         email,
         phone,
         password,
         role: role,
-        address: fullAddress,
       });
 
       if (response) {
-        console.log("user details ",response.data);
-        alert(response.data.message);
-        localStorage.removeItem("role");
-        navigate("/MyAccountSignIn");
+        console.log("user details ", response.data);
+        toast.success(response.data.message);
+
+        setTimeout(() => {
+          localStorage.removeItem("role");
+          navigate("/MyAccountSignIn");
+        }, 1000); // 1.5 seconds delay
       }
     } catch (error) {
       console.log("Registration error:", error);
-      alert(error.response.data.extraDetails);
+      toast.error(error.response.data.extraDetails);
     }
   };
 
@@ -125,61 +122,6 @@ const MyAccountSignUp = () => {
                       id="password"
                       placeholder="Password"
                       value={formData.password}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
-                  <div className="col-12">
-                    <input
-                      type="text"
-                      className="form-control"
-                      id="address"
-                      placeholder="Street Address"
-                      value={formData.address}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
-                  <div className="col-12">
-                    <input
-                      type="text"
-                      className="form-control"
-                      id="city"
-                      placeholder="City"
-                      value={formData.city}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
-                  <div className="col-md-6">
-                    <input
-                      type="text"
-                      className="form-control"
-                      id="state"
-                      placeholder="State"
-                      value={formData.state}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
-                  <div className="col-md-6">
-                    <input
-                      type="text"
-                      className="form-control"
-                      id="zip"
-                      placeholder="ZIP Code"
-                      value={formData.zip}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
-                  <div className="col-12">
-                    <input
-                      type="text"
-                      className="form-control"
-                      id="country"
-                      placeholder="Country"
-                      value={formData.country}
                       onChange={handleChange}
                       required
                     />

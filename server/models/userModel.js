@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
+
 const userSchema = new mongoose.Schema(
   {
     userName: {
@@ -26,28 +27,38 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    address: {
-      street: {
-        type: String,
-        required: true,
+    address: [
+      {
+        name: {
+          type: String,
+          required: true,
+        },
+        street: {
+          type: String,
+          required: true,
+        },
+        city: {
+          type: String,
+          required: true,
+        },
+        state: {
+          type: String,
+          required: true,
+        },
+        zip: {
+          type: String,
+          required: true,
+        },
+        country: {
+          type: String,
+          required: true,
+        },
+        isdefault: {
+          type: Boolean,
+          required: true,
+        },
       },
-      city: {
-        type: String,
-        required: true,
-      },
-      state: {
-        type: String,
-        required: true,
-      },
-      zip: {
-        type: String,
-        required: true,
-      },
-      country: {
-        type: String,
-        required: true,
-      },
-    },
+    ],
     isAdmin: {
       type: Boolean,
       default: false,

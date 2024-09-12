@@ -61,23 +61,167 @@ const addProduct = async (req, res) => {
 const getProducts = async (req, res) => {
   try {
     const products = await Product.find();
+
+    // Get unique departments
+    const categories = [
+      ...new Set(products.flatMap((product) => product.department)),
+    ];
+
+    // Group products by department and type
     const groupedProducts = products.reduce((acc, product) => {
+      const department = product.department;
       const type = product.type;
-      if (!acc[type]) {
-        acc[type] = [];
+
+      if (!acc[department]) {
+        acc[department] = {};
       }
-      acc[type].push(product);
+
+      if (!acc[department][type]) {
+        acc[department][type] = [];
+      }
+
+      acc[department][type].push(product);
       return acc;
     }, {});
 
     res.status(200).json({
       success: true,
+      departments: categories,
       totalProducts: products.length,
-      data: groupedProducts,
+      groupedProducts,
     });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: "Failed to get products" });
+  }
+};
+
+const getAllProducts = async (req, res) => {
+  try {
+    const products = await Product.find();
+    res.status(200).json({
+      success: true,
+      totalProducts: products.length,
+      products,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Failed to get products" });
+  }
+};
+
+const getProductsByDepartment = async (req, res) => {
+  try {
+    const { department } = req.params;
+
+    const products = await Product.find({ department });
+
+    if (!products.length) {
+      return res.status(404).json({
+        success: false,
+        message: "No products found for this department",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      totalProducts: products.length,
+      products,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to get products by department",
+    });
+  }
+};
+
+const getDepartments = async (req, res) => {
+  try {
+    const products = await Product.find();
+
+    // Get unique departments
+    const departments = [
+      ...new Set(products.map((product) => product.department)),
+    ];
+
+    res.status(200).json({
+      success: true,
+      departments,
+    });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to get departments" });
+  }
+};
+
+const getDepartmentsAndTypes = async (req, res) => {
+  try {
+    const products = await Product.find();
+
+    // Group products by department and type
+    const groupedProducts = products.reduce((acc, product) => {
+      const department = product.department;
+      const type = product.type;
+
+      if (!acc[department]) {
+        acc[department] = {};
+      }
+
+      if (!acc[department][type]) {
+        acc[department][type] = [];
+      }
+
+      acc[department][type].push(product);
+      return acc;
+    }, {});
+
+    // Convert groupedProducts object to an array of arrays
+    const result = Object.entries(groupedProducts).map(
+      ([department, types]) => {
+        return [department, Object.keys(types)];
+      }
+    );
+
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to get departments and types" });
+  }
+};
+
+const getProductsByDepartmentAndType = async (req, res) => {
+  try {
+    const { department, type } = req.params;
+
+    const products = await Product.find({ department, type });
+
+    if (!products.length) {
+      return res.status(404).json({
+        success: false,
+        message: `No products found for ${type} in ${department}`,
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      totalProducts: products.length,
+      products,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to get products by department and type",
+    });
   }
 };
 
@@ -87,7 +231,7 @@ const updateProduct = async (req, res) => {
   try {
     const product = await Product.findByIdAndUpdate(
       productId,
-      { name, description, department,type, price, quantity },
+      { name, description, department, type, price, quantity },
       { new: true }
     );
     res.status(200).json({ success: true, data: product });
@@ -119,20 +263,22 @@ const deleteProduct = async (req, res) => {
       .json({ success: true, message: "Product deleted successfully" });
   } catch (error) {
     console.log("Error deleting product:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Failed to delete product due to an internal error",
-      });
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete product due to an internal error",
+    });
   }
 };
 
 const checkInventory = async (req, res) => {
   try {
     const products = await Product.find({ seller: req.user._id });
-    const totalproducts=await Product.countDocuments({seller:req.user._id});
-    res.status(200).json({ success: true,totalProducts:totalproducts, data: products });
+    const totalproducts = await Product.countDocuments({
+      seller: req.user._id,
+    });
+    res
+      .status(200)
+      .json({ success: true, totalProducts: totalproducts, data: products });
   } catch (error) {
     console.error(error);
     res
@@ -143,20 +289,32 @@ const checkInventory = async (req, res) => {
 
 const checkdatafromstore = async (req, res) => {
   try {
-    const {category,storeId}=req.params;
-    const products = await Product.find({ store:storeId ,department:category});
-    const totalProduct = await Product.countDocuments({ store: storeId, department:category});
-    const categories = products.flatMap(product => product.department);
+    const { category, storeId } = req.params;
+    const products = await Product.find({
+      store: storeId,
+      department: category,
+    });
+    const totalProduct = await Product.countDocuments({
+      store: storeId,
+      department: category,
+    });
+    const categories = products.flatMap((product) => product.department);
     const uniqueCategories = [...new Set(categories)];
 
     const groupedProducts = uniqueCategories.reduce((acc, category) => {
-      acc[category] = products.filter(product => product.department.includes(category));
+      acc[category] = products.filter((product) =>
+        product.department.includes(category)
+      );
       return acc;
     }, {});
-    res.status(200).json({ success: true, totalProducts: totalProduct, products });
+    res
+      .status(200)
+      .json({ success: true, totalProducts: totalProduct, products });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: "Failed to check inventory" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to check inventory" });
   }
 };
 
@@ -317,6 +475,11 @@ const getOrderDetails = async (req, res) => {
 module.exports = {
   addProduct,
   getProducts,
+  getAllProducts,
+  getDepartments,
+  getDepartmentsAndTypes,
+  getProductsByDepartment,
+  getProductsByDepartmentAndType,
   updateProduct,
   deleteProduct,
   checkInventory,

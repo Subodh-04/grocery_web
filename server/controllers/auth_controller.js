@@ -9,7 +9,7 @@ const { signupSchema, loginSchema } = require("../validators/auth-validator");
 const home = async (req, res, next) => {
   try {
     signupSchema.parse(req.body);
-    const { userName, email, phone, password, role, address } = req.body;
+    const { userName, email, phone, password, role} = req.body;
 
     const userExists = await User.findOne({ email });
     if (userExists) {
@@ -22,7 +22,6 @@ const home = async (req, res, next) => {
       phone,
       password,
       role,
-      address,
       verified: role == "seller" ? false : true,
     });
 

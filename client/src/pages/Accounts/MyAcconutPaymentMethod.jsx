@@ -80,7 +80,7 @@ const MyAcconutPaymentMethod = () => {
                       <li className="nav-item">
                         <Link
                           className="nav-link active"
-                          to="/MyAcconutPaymentMethod"
+                          to="/MyAccountPaymentMethod"
                         >
                           <i className="fas fa-credit-card me-2" />
                           Payment Method
@@ -88,7 +88,7 @@ const MyAcconutPaymentMethod = () => {
                       </li>
                       {/* nav item */}
                       <li className="nav-item">
-                        <Link className="nav-link" to="/MyAcconutNotification">
+                        <Link className="nav-link" to="/MyAccountNotification">
                           <i className="fas fa-bell me-2" />
                           Notification
                         </Link>
@@ -349,14 +349,14 @@ const MyAcconutPaymentMethod = () => {
                 </li>
                 {/* nav item */}
                 <li className="nav-item">
-                  <a className="nav-link" href="/MyAcconutPaymentMethod">
+                  <a className="nav-link" href="/MyAccountPaymentMethod">
                     <i className="fas fa-credit-card me-2" />
                     Payment Method
                   </a>
                 </li>
                 {/* nav item */}
                 <li className="nav-item">
-                  <a className="nav-link" href="/MyAcconutNotification">
+                  <a className="nav-link" href="/MyAccountNotification">
                     <i className="fas fa-bell me-2" />
                     Notification
                   </a>

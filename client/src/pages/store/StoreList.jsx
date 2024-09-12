@@ -1,15 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import graphics from "../../images/store-graphics.svg";
-import storelogo1 from "../../images/stores-logo-1.svg";
-import storelogo2 from "../../images/stores-logo-2.svg";
-import storelogo3 from "../../images/stores-logo-3.svg";
-import storelogo4 from "../../images/stores-logo-4.svg";
-import storelogo5 from "../../images/stores-logo-5.svg";
-import storelogo6 from "../../images/stores-logo-6.svg";
-import storelogo7 from "../../images/stores-logo-7.svg";
-import storelogo8 from "../../images/stores-logo-8.svg";
-import storeLogo9 from "../../images/stores-logo-9.svg";
 
 import { Slide, Zoom } from "react-awesome-reveal";
 import { MagnifyingGlass } from "react-loader-spinner";

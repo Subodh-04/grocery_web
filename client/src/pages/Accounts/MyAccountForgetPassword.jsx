@@ -3,6 +3,7 @@ import forgetpassword from "../../images/fp-g.svg";
 import { Link } from "react-router-dom";
 import ScrollToTop from "../ScrollToTop";
 import axios from "axios";
+import { toast } from "react-toastify";
 
 const MyAccountForgetPassword = () => {
   const [email, setEmail] = useState("");
@@ -12,9 +13,9 @@ const MyAccountForgetPassword = () => {
       const response=await axios.post("http://localhost:5000/api/auth/user/resetpass",{email});
       
       if(!response){
-        alert(response.data.message);
+        toast.error(response.data.message);
       }
-      alert(response.data.message);
+      toast.info(response.data.message);
       console.log("Password Change Mail Send to the User");
     } catch (error) {
       console.log("Error While forget Password:",error);

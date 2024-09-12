@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { MagnifyingGlass } from "react-loader-spinner";
 import ScrollToTop from "../ScrollToTop";
 import axios from "axios";
+import { toast } from "react-toastify";
 
 const MyAccountSetting = () => {
   const [loaderStatus, setLoaderStatus] = useState(true);
@@ -68,7 +69,7 @@ const MyAccountSetting = () => {
         "userData",
         JSON.stringify({ ...userData, ...response.data })
       );
-      alert("Details updated successfully!");
+      toast.success("Details updated successfully!");
     } catch (error) {
       console.error("Error updating details:", error);
     }
@@ -109,7 +110,7 @@ const MyAccountSetting = () => {
       );
       console.log("password request:", response.data);
 
-      alert(response.data.message);
+      toast.info(response.data.message);
     } catch (error) {
       console.error("Error requesting password reset:", error);
     }
@@ -132,10 +133,10 @@ const MyAccountSetting = () => {
         }
       );
       if (!response) {
-        alert(response.data.message);
+        toast.error(response.data.message);
         console.log(response.data.message);
       }
-      alert(response.data.message);
+      toast.success(response.data.message);
       setUserDetails({
         ...userDetails,
         currentPassword: "",
@@ -154,7 +155,7 @@ const MyAccountSetting = () => {
         headers: { Authorization: `Bearer ${userData.token}` },
       });
       localStorage.removeItem("userData");
-      alert("Account deleted successfully!");
+      toast.info("Account deleted successfully!");
       window.location.href = "/"; // Redirect to home or login page
     } catch (error) {
       console.error("Error deleting account:", error);
@@ -163,7 +164,7 @@ const MyAccountSetting = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("userData");
-    alert("Logged out successfully!");
+    toast.info("Logged out successfully!");
     navigate("/MyAccountSignIn");
   };
 

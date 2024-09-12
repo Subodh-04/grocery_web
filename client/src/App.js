@@ -1,8 +1,13 @@
 import React from "react";
 import "./App.css";
-import { BrowserRouter as Router, Route, Routes, useLocation } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Route,
+  Routes,
+  useLocation,
+} from "react-router-dom";
 // Components
-import Header from './Component/Header';
+import Header from "./Component/Header";
 import Footer from "./Component/Footer";
 // Pages
 import Home from "./pages/Home";
@@ -32,12 +37,16 @@ import MyAccountSignIn from "./pages/Accounts/MyAccountSignIn";
 import MyAccountSignUp from "./pages/Accounts/MyAccountSignUp";
 import SellerPanel from "./pages/SellerPanel/SellerPanel";
 import MyAccountPasswordReset from "./pages/Accounts/MyAccountPasswordReset";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const AppContent = () => {
   const location = useLocation();
-  
+
   // Define the conditions for when to hide the Header and Footer
-  const hideHeaderAndFooter = location.pathname === "/seller-panel" || location.pathname.startsWith("/reset-password");
+  const hideHeaderAndFooter =
+    location.pathname === "/seller-panel" ||
+    location.pathname.startsWith("/reset-password");
 
   return (
     <div>
@@ -47,7 +56,7 @@ const AppContent = () => {
       <Routes>
         <Route path="/Grocery-react/" element={<Home />} />
         {/* Shop pages */}
-        <Route path="/Shop" element={<Shop />} />
+        <Route path="/Shop/:department" element={<Shop />} />
         <Route path="/ShopGridCol3" element={<ShopGridCol3 />} />
         <Route path="/ShopListCol" element={<ShopListCol />} />
         <Route path="/ShopWishList" element={<ShopWishList />} />
@@ -59,13 +68,25 @@ const AppContent = () => {
         {/* Accounts pages */}
         <Route path="/MyAccountOrder" element={<MyAccountOrder />} />
         <Route path="/MyAccountSetting" element={<MyAccountSetting />} />
-        <Route path="/MyAccountNotification" element={<MyAcconutNotification />} />
-        <Route path="/MyAccountPaymentMethod" element={<MyAcconutPaymentMethod />} />
+        <Route
+          path="/MyAccountNotification"
+          element={<MyAcconutNotification />}
+        />
+        <Route
+          path="/MyAccountPaymentMethod"
+          element={<MyAcconutPaymentMethod />}
+        />
         <Route path="/MyAccountAddress" element={<MyAccountAddress />} />
-        <Route path="/MyAccountForgetPassword" element={<MyAccountForgetPassword />} />
+        <Route
+          path="/MyAccountForgetPassword"
+          element={<MyAccountForgetPassword />}
+        />
         <Route path="/MyAccountSignIn" element={<MyAccountSignIn />} />
         <Route path="/MyAccountSignUp" element={<MyAccountSignUp />} />
-        <Route path="/reset-password/:resetToken" element={<MyAccountPasswordReset />} />
+        <Route
+          path="/reset-password/:resetToken"
+          element={<MyAccountPasswordReset />}
+        />
 
         {/* About pages */}
         <Route path="/Blog" element={<Blog />} />
@@ -85,6 +106,18 @@ const AppContent = () => {
 const App = () => {
   return (
     <Router>
+      <ToastContainer
+        position="bottom-right"
+        autoClose={3500}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
       <AppContent />
     </Router>
   );

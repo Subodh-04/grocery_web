@@ -32,7 +32,7 @@ const loginSchema = z.object({
     .trim()
     .regex(emailRegex, {
       message:
-        "Email must contain both letters and numbers, have between 5 and 40 characters before the @ symbol, and be a valid email format",
+        "Email must contain both letters, numbers and valid email format.",
     })
     .email({ message: "Invalid Email Address" }),
   password: z
@@ -49,7 +49,6 @@ const signupSchema = loginSchema.extend({
     .string({ required_error: "Phone is required" })
     .length(10, { message: "Phone number must be 10 digits" }),
   role: z.string({ required_error: "Role is required" }),
-  address: addressSchema,
   store: storeSchema.optional(), // Store details are optional on registration
 }).refine((data) => {
   if (data.role === "seller" && data.store) {
