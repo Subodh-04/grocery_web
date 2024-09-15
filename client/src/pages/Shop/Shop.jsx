@@ -5,6 +5,7 @@ import "@fortawesome/fontawesome-free/css/all.min.css";
 
 import ScrollToTop from "../ScrollToTop";
 import axios from "axios";
+import { toast } from "react-toastify";
 
 function Dropdown() {
   const [loaderStatus, setLoaderStatus] = useState(true);
@@ -30,7 +31,6 @@ function Dropdown() {
             },
           }
         );
-        console.log("data:", response.data);
 
         setProducts(response.data.products);
         setCurrentPage(1);
@@ -54,18 +54,16 @@ function Dropdown() {
             },
           }
         );
-        if(!res){
-          console.log("not found:",res.data);
+        if (!res) {
+          console.log("not found:", res.data);
         }
-        console.log("data found:",res.data);
         setProducts(res.data.products);
       } catch (error) {
         console.log("error fetching products:", error);
       }
     };
     getprod();
-  },[department,type]);
-
+  }, [department, type]);
 
   useEffect(() => {
     const fetchDepartmentsAndTypes = async () => {
@@ -92,6 +90,28 @@ function Dropdown() {
     };
     fetchDepartmentsAndTypes();
   }, []);
+
+  const handleaddtocart = async (productId) => {
+    try {
+      const userData = JSON.parse(localStorage.getItem("userData"));
+      const response = await axios.post(
+        "http://localhost:5000/api/order/cart/add",
+        {
+          productId,
+          quantity: 1,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${userData.token}`,
+          },
+        }
+      );
+      toast.success(response.data.message);
+      console.log(response.data);
+    } catch (error) {
+      console.log("error while adding to cart:", error);
+    }
+  };
 
   const toggleDropdown = (index) => {
     setOpenDropdowns((prevOpenDropdowns) =>
@@ -172,7 +192,7 @@ function Dropdown() {
                           className="nav-link"
                           to={`/shop/${department}`}
                           onClick={() => {
-                            toggleDropdown(index);;
+                            toggleDropdown(index);
                           }}
                           aria-expanded={
                             openDropdowns.includes(index) ? "true" : "false"
@@ -191,7 +211,11 @@ function Dropdown() {
                             <ul className="nav flex-column ms-3">
                               {types.map((type, itemIndex) => (
                                 <li className="nav-item" key={itemIndex}>
-                                  <Link className="nav-link" to="#" onClick={()=>setType(type)}>
+                                  <Link
+                                    className="nav-link"
+                                    to="#"
+                                    onClick={() => setType(type)}
+                                  >
                                     {type}
                                   </Link>
                                 </li>
@@ -369,27 +393,14 @@ function Dropdown() {
                                     </span>
                                   </div>
                                   <div>
-                                    <Link
-                                      to="#!"
-                                      className="btn btn-primary btn-sm"
+                                    <button
+                                      onClick={() =>
+                                        handleaddtocart(product._id)
+                                      }
+                                      className="btn btn-primary btn-medium"
                                     >
-                                      <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width={16}
-                                        height={16}
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth={2}
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        className="feather feather-plus"
-                                      >
-                                        <line x1={12} y1={5} x2={12} y2={19} />
-                                        <line x1={5} y1={12} x2={19} y2={12} />
-                                      </svg>{" "}
                                       Add
-                                    </Link>
+                                    </button>
                                   </div>
                                 </div>
                               </div>

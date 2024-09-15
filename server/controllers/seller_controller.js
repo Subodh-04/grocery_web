@@ -4,8 +4,6 @@ const Store = require("../models/storeModel");
 
 const checkInventory = async (req, res) => {
   try {
-    console.log(req.user._id);
-    
     const products = await Product.find({ seller: req.user._id });
     const totalproducts = await Product.countDocuments({
       seller: req.user._id,
@@ -122,30 +120,30 @@ const removefromcart = async (req, res) => {
 };
 
 const searchProducts = async (req, res) => {
-    try {
-      const { productname } = req.query; // Read search term from query parameters
-  
-      if (!productname) {
-        return res.status(400).json({ message: "Search term is required" });
-      }
-  
-      // Use regular expression for partial, case-insensitive matches
-      const products = await Product.find({
-        name: { $regex: new RegExp(productname, "i") } // Case-insensitive and partial match
-      });
-  
-      if (products.length === 0) {
-        return res.status(404).json({ message: "No products found" });
-      }
-  
-      res.status(200).json({
-        message: "Products found",
-        data: products
-      });
-    } catch (error) {
-      console.error("Error during product search:", error);
-      return res.status(500).json({ message: "Server error" });
+  try {
+    const { productname } = req.query; // Read search term from query parameters
+
+    if (!productname) {
+      return res.status(400).json({ message: "Search term is required" });
     }
+
+    // Use regular expression for partial, case-insensitive matches
+    const products = await Product.find({
+      name: { $regex: new RegExp(productname, "i") }, // Case-insensitive and partial match
+    });
+
+    if (products.length === 0) {
+      return res.status(404).json({ message: "No products found" });
+    }
+
+    res.status(200).json({
+      message: "Products found",
+      data: products,
+    });
+  } catch (error) {
+    console.error("Error during product search:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
 };
 
 module.exports = {

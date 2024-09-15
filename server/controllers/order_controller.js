@@ -100,7 +100,6 @@ const cancelOrder = async (req, res) => {
 
     res.status(200).json({ message: "Order cancelled successfully" });
   } catch (error) {
-    console.log("Error while cancelling order:", error);
     res.status(500).json({ message: "Failed to cancel order" });
   }
 };
@@ -122,7 +121,6 @@ const cancelOrderSeller = async (req, res) => {
 
     res.status(200).json({ message: "Order cancelled by seller successfully" });
   } catch (error) {
-    console.log("Internal server error", error);
     res.status(500).json({ message: "Failed to cancel order by seller" });
   }
 };

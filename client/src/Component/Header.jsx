@@ -192,17 +192,11 @@ const Header = () => {
                   className="dropdown-menu sm-menu"
                   aria-labelledby="navbarDropdown"
                 >
-                  <Link className="dropdown-item" to="/Shop">
-                    Shop
-                  </Link>
                   <Link className="dropdown-item" to="/ShopWishList">
                     Shop Wishlist
                   </Link>
                   <Link className="dropdown-item" to="/ShopCart">
                     Shop Cart
-                  </Link>
-                  <Link className="dropdown-item" to="/ShopCheckOut">
-                    Shop Checkout
                   </Link>
                 </div>
               </li>

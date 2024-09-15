@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { MagnifyingGlass } from "react-loader-spinner";
 import ScrollToTop from "../ScrollToTop";
 import axios from "axios";
@@ -9,6 +9,8 @@ const ShopCart = () => {
   const [loaderStatus, setLoaderStatus] = useState(true);
   const [cart, setCart] = useState([]);
   const [totalamount, setTotalAmount] = useState(0);
+  const navigate = useNavigate();
+
   useEffect(() => {
     setTimeout(() => {
       setLoaderStatus(false);
@@ -308,6 +310,9 @@ const ShopCart = () => {
                               <button
                                 className="btn btn-primary btn-lg d-flex justify-content-between align-items-center"
                                 type="submit"
+                                onClick={() => {
+                                  navigate("/ShopCheckOut");
+                                }}
                               >
                                 Go to Checkout{" "}
                                 <span className="fw-bold">

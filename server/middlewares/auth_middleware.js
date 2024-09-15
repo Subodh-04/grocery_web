@@ -28,8 +28,6 @@ const protect = async (req, res, next) => {
 
 const authorize = (roles) => {
   return (req, res, next) => {
-    console.log(roles);
-    console.log(req.user.role);
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({ message: "Forbidden: Access is denied" });
     }

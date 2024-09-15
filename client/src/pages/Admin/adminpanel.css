@@ -1,0 +1,199 @@
+/* Main Cards Wrapper */
+.main-cards {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-bottom: 30px;
+  gap: 15px;
+}
+
+/* Custom Card Styling */
+.custom-card {
+  flex: 1;
+  background-color: #f9f9f9; /* Light background color for consistency */
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Soft shadow */
+  text-align: center;
+  transition: transform 0.3s, box-shadow 0.3s; /* Smooth hover effect */
+  min-width: 200px; /* Ensures cards have a minimum size */
+}
+
+.custom-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15); /* Stronger shadow on hover */
+}
+
+/* Inner content of the card */
+.card-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.card-inner h3 {
+  font-size: 16px;
+  color: #333;
+  font-weight: 600;
+}
+
+.card_icon {
+  font-size: 24px;
+  color: #007bff; /* Theme color for icons */
+}
+
+/* Number typography */
+.custom-card h1 {
+  font-size: 36px;
+  font-weight: 700;
+  color: #333;
+}
+
+/* Chart Section */
+.charts {
+  margin-top: 40px;
+}
+
+/* Add consistent spacing between charts */
+.charts .recharts-responsive-container {
+  margin-bottom: 30px;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .main-cards {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .custom-card {
+    width: 100%; /* Ensures cards take full width on smaller screens */
+  }
+}
+
+/* Title Styling */
+.main-title h3 {
+  font-size: 24px;
+  font-weight: bold;
+  color: #007bff; /* Consistent theme color for the dashboard title */
+  margin-bottom: 20px;
+}
+
+/* Chart Tooltip Styling */
+.recharts-tooltip-wrapper {
+  font-size: 14px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  padding: 5px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Consistent X-Axis and Y-Axis Line Styling */
+.recharts-cartesian-axis-line {
+  stroke: #ccc; /* Light stroke for axis lines */
+}
+
+/* Legend Styling */
+.recharts-default-legend {
+  font-size: 12px;
+  color: #555;
+}
+
+/* Tooltip Content */
+.recharts-tooltip-item {
+  color: #333;
+}
+
+/* Y-Axis Label Styling */
+.recharts-cartesian-axis-tick-value {
+  font-size: 12px;
+  color: #555;
+}
+
+/* Ensure that chart bars and lines are spaced well */
+.recharts-bar-rectangle,
+.recharts-line {
+  stroke-width: 2px;
+}
+
+/* General Body and Font Styling */
+body {
+  font-family: "Roboto", sans-serif; /* Soft background color for the page */
+  margin: 0;
+  padding: 0;
+  line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  padding: 0;
+  font-weight: normal;
+}
+
+h3 {
+  font-size: 24px;
+  color: #333;
+}
+
+p {
+  font-size: 14px;
+  color: #666;
+}
+
+a {
+  text-decoration: none;
+  color: #007bff;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+button {
+  background-color: #007bff;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+/* Flex Container Helpers */
+.flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.flex-column {
+  flex-direction: column;
+}
+
+.flex-between {
+  justify-content: space-between;
+}
+
+/* Miscellaneous */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.shadow-sm {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.shadow-md {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.shadow-lg {
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}

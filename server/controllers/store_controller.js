@@ -96,8 +96,7 @@ const getStores = async (req, res) => {
 
 const findStoreById = async (req, res) => {
   try {
-    const { storeId } = req.params;
-    console.log("Received storeId:", storeId); // Log the storeId
+    const { storeId } = req.params; // Log the storeId
 
     if (!mongoose.Types.ObjectId.isValid(storeId)) {
       return res.status(400).json({ message: "Invalid store ID format" });

@@ -36,6 +36,7 @@ import MyAccountForgetPassword from "./pages/Accounts/MyAccountForgetPassword";
 import MyAccountSignIn from "./pages/Accounts/MyAccountSignIn";
 import MyAccountSignUp from "./pages/Accounts/MyAccountSignUp";
 import SellerPanel from "./pages/SellerPanel/SellerPanel";
+import AdminPanel from "./pages/Admin/AdminPanel";
 import MyAccountPasswordReset from "./pages/Accounts/MyAccountPasswordReset";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -46,7 +47,8 @@ const AppContent = () => {
   // Define the conditions for when to hide the Header and Footer
   const hideHeaderAndFooter =
     location.pathname === "/seller-panel" ||
-    location.pathname.startsWith("/reset-password");
+    location.pathname.startsWith("/reset-password") ||
+    location.pathname === "/admin-panel";
 
   return (
     <div>
@@ -95,6 +97,8 @@ const AppContent = () => {
         <Route path="/AboutUs" element={<AboutUs />} />
         {/* Seller panel */}
         <Route path="/seller-panel" element={<SellerPanel />} />
+        {/* Admin panel */}
+        <Route path="/admin-panel" element={<AdminPanel />} />
       </Routes>
 
       {/* Conditionally render Footer */}
