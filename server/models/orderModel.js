@@ -25,9 +25,9 @@ const orderSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-    DeliveryCost:{
+    deliveryCost: {
       type: Number,
-      required:true,
+      required: true,
     },
     totalAmount: {
       type: Number,
@@ -38,10 +38,20 @@ const orderSchema = new mongoose.Schema(
       enum: ["pending", "delivering", "completed", "cancelled"],
       default: "pending",
     },
-    deliverySlot: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "DeliverySlot",
-      required: true,
+    deliveryTime: {
+      label: {
+        type: String,
+        required: true,
+      },
+      price: {
+        type: Number,
+        required: true,
+      },
+      tag: {
+        type: String,
+        enum: ["Paid", "Free"],
+        required: true,
+      },
     },
   },
   {

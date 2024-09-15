@@ -25,23 +25,6 @@ const storeSchema = new mongoose.Schema(
     categories: {
       type: [String],
     },
-    deliverySlots: [
-      {
-        label: {
-          type: String,
-          required: true,
-        },
-        cost: {
-          type: Number,
-          required: true,
-        },
-        type: {
-          type: String,
-          enum: ["Paid", "Free"],
-          required: true,
-        },
-      },
-    ],
     pickupAvailable: {
       type: Boolean,
     },
@@ -49,10 +32,6 @@ const storeSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-    },
-    product: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Product",
     },
   },
   {

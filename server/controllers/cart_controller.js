@@ -2,7 +2,6 @@ const User = require("../models/userModel");
 
 const addToCart = async (req, res) => {
   try {
-    ``;
     const userId = req.user._id;
     const { productId, quantity } = req.body;
 

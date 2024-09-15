@@ -1,6 +1,8 @@
+const { default: mongoose } = require("mongoose");
 const Product = require("../models/productModel");
 const Store = require("../models/storeModel");
 const User = require("../models/userModel");
+const { checkInventory } = require("./product_controller");
 
 const createStore = async (req, res) => {
   try {
@@ -10,7 +12,6 @@ const createStore = async (req, res) => {
       deliveryOptions,
       proximity,
       categories,
-      deliverySlots,
       pickupAvailable,
     } = req.body;
     const sellerId = req.user._id;
@@ -43,7 +44,6 @@ const createStore = async (req, res) => {
       deliveryOptions,
       proximity,
       categories,
-      deliverySlots,
       pickupAvailable,
       seller: sellerId,
     });
@@ -68,48 +68,59 @@ const updateStoreDetails = async (req, res) => {
       new: true,
     });
     if (!store) {
-      return res.status(404).send({ message: "Store Doesnt Exist" });
+      return res.status(404).send({ message: "Store doesn't exist" });
     }
     res.status(200).send({
       success: true,
-      message: "Store Details Updated Successfully",
+      message: "Store details updated successfully",
       data: store,
     });
   } catch (error) {
-    console.log("Error Updating Store:", error);
-    res.status(400).send({ message: "Internal Server Error" });
+    console.log("Error updating store:", error);
+    res.status(400).send({ message: "Internal server error" });
   }
 };
 
 const getStores = async (req, res) => {
   try {
-    const Stores = await Store.find({}).select(
+    const stores = await Store.find({}).select(
       "storeName storeImage storeLocation proximity deliveryOptions categories seller"
     );
     const storeCount = await Store.countDocuments();
-    res.status(200).send({ TotalStores: storeCount, Stores });
+    res.status(200).send({ TotalStores: storeCount, Stores: stores });
   } catch (error) {
-    console.log("Error Getting Stores", error);
-    res.status(500).json({ message: "Internal Server Error" });
+    console.log("Error getting stores", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
 const findStoreById = async (req, res) => {
   try {
     const { storeId } = req.params;
+    console.log("Received storeId:", storeId); // Log the storeId
 
-    const store = await Store.findById(storeId).populate("product");
-    if (!store) {
-      return res.status(404).send({ message: "Store Doesnt Exists" });
+    if (!mongoose.Types.ObjectId.isValid(storeId)) {
+      return res.status(400).json({ message: "Invalid store ID format" });
     }
 
-    const products=await Product.find({store:storeId,seller:store.seller});
-    const totalProducts=await Product.countDocuments({store:storeId,seller:store.seller});
+    const store = await Store.findById(storeId).select(
+      "storeName storeImage storeLocation deliveryOptions proximity categories pickupAvailable seller"
+    );
+    if (!store) {
+      return res.status(404).send({ message: "Store doesn't exist" });
+    }
 
-    res.status(200).send({ data: store,totalProducts:totalProducts,products });
+    const products = await Product.find({ store: storeId });
+    const totalProducts = await Product.countDocuments({ store: storeId });
+
+    res.status(200).send({
+      data: store,
+      totalProducts,
+      products,
+    });
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
-    console.log("Error while Finding Store:", error);
+    console.log("Error while finding store:", error);
   }
 };
 

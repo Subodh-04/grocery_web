@@ -368,7 +368,7 @@ export default function SellerPanel() {
       try {
         const userData = JSON.parse(localStorage.getItem("userData"));
         const response = await axios.get(
-          "http://localhost:5000/api/product/inventory",
+          "http://localhost:5000/api/seller/product/Inventory",
           {
             headers: {
               Authorization: `Bearer ${userData.token}`,
@@ -601,7 +601,7 @@ export default function SellerPanel() {
       try {
         const userData = JSON.parse(localStorage.getItem("userData"));
         const response = await axios.get(
-          "http://localhost:5000/api/product/orders/summary",
+          "http://localhost:5000/api/seller/orders/summary",
           {
             headers: {
               Authorization: `Bearer ${userData.token}`,

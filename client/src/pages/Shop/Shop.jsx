@@ -66,8 +66,6 @@ function Dropdown() {
     getprod();
   },[department,type]);
 
-  console.log("type:", type);
-  console.log("department:", department);
 
   useEffect(() => {
     const fetchDepartmentsAndTypes = async () => {

@@ -16,6 +16,7 @@ const addProduct = async (req, res) => {
       store,
     } = req.body;
 
+    // Validation
     if (
       !name ||
       !prod_img ||
@@ -29,6 +30,7 @@ const addProduct = async (req, res) => {
       return res.status(400).json({ message: "All fields are required" });
     }
 
+    // Check if the store exists and belongs to the seller
     const storeExists = await Store.findOne({ _id: store, seller });
     if (!storeExists) {
       return res.status(400).json({
@@ -36,6 +38,7 @@ const addProduct = async (req, res) => {
       });
     }
 
+    // Create new product
     const newProduct = new Product({
       name,
       prod_img,
@@ -60,7 +63,7 @@ const addProduct = async (req, res) => {
 
 const getProducts = async (req, res) => {
   try {
-    const products = await Product.find();
+    const products = await Product.find().populate("seller").populate("store");
 
     // Get unique departments
     const categories = [
@@ -98,7 +101,7 @@ const getProducts = async (req, res) => {
 
 const getAllProducts = async (req, res) => {
   try {
-    const products = await Product.find();
+    const products = await Product.find().populate("seller").populate("store");
     res.status(200).json({
       success: true,
       totalProducts: products.length,
@@ -113,8 +116,9 @@ const getAllProducts = async (req, res) => {
 const getProductsByDepartment = async (req, res) => {
   try {
     const { department } = req.params;
-
-    const products = await Product.find({ department });
+    const products = await Product.find({ department })
+      .populate("seller")
+      .populate("store");
 
     if (!products.length) {
       return res.status(404).json({
@@ -201,8 +205,9 @@ const getDepartmentsAndTypes = async (req, res) => {
 const getProductsByDepartmentAndType = async (req, res) => {
   try {
     const { department, type } = req.params;
-
-    const products = await Product.find({ department, type });
+    const products = await Product.find({ department, type })
+      .populate("seller")
+      .populate("store");
 
     if (!products.length) {
       return res.status(404).json({
@@ -233,7 +238,10 @@ const updateProduct = async (req, res) => {
       productId,
       { name, description, department, type, price, quantity },
       { new: true }
-    );
+    )
+      .populate("seller")
+      .populate("store");
+
     res.status(200).json({ success: true, data: product });
   } catch (error) {
     console.error(error);
@@ -248,7 +256,7 @@ const deleteProduct = async (req, res) => {
   try {
     const hasOrders = await Order.find({ product: productId });
     if (hasOrders.length > 0) {
-      return res.status(201).json({
+      return res.status(400).json({
         success: false,
         message:
           "Cannot delete the product as there are pending orders for this product.",
@@ -267,23 +275,6 @@ const deleteProduct = async (req, res) => {
       success: false,
       message: "Failed to delete product due to an internal error",
     });
-  }
-};
-
-const checkInventory = async (req, res) => {
-  try {
-    const products = await Product.find({ seller: req.user._id });
-    const totalproducts = await Product.countDocuments({
-      seller: req.user._id,
-    });
-    res
-      .status(200)
-      .json({ success: true, totalProducts: totalproducts, data: products });
-  } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to check inventory" });
   }
 };
 
@@ -315,86 +306,6 @@ const checkdatafromstore = async (req, res) => {
     res
       .status(500)
       .json({ success: false, message: "Failed to check inventory" });
-  }
-};
-
-const getOrderSummary = async (req, res) => {
-  try {
-    const formatDate = (isoString) => {
-      const date = new Date(isoString);
-      const day = String(date.getDate()).padStart(2, "0");
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const year = date.getFullYear();
-      const hours = String(date.getHours()).padStart(2, "0");
-      const minutes = String(date.getMinutes()).padStart(2, "0");
-      return `${day}/${month}/${year} ${hours}:${minutes}`;
-    };
-
-    const orders = await Order.find({ seller: req.user._id })
-      .populate({
-        path: "product",
-        populate: {
-          path: "store",
-          model: "Store",
-        },
-      })
-      .populate("customer");
-
-    const TotalOrders = await Order.countDocuments({ seller: req.user._id });
-    const Completedorders = await Order.countDocuments({
-      seller: req.user._id,
-      status: "completed",
-    });
-    const Pendingorders = await Order.countDocuments({
-      seller: req.user._id,
-      status: "pending",
-    });
-
-    const orderedProducts = orders.map((order) => ({
-      orderId: order._id,
-      product: {
-        productId: order.product._id,
-        productName: order.product.name,
-        productImage: order.product.prod_img,
-        type: order.product.type,
-        description: order.product.description,
-        productPrice: order.product.price,
-        sellerId: order.product.seller,
-        store: {
-          storeId: order.product.store ? order.product.store._id : null,
-          storeName: order.product.store ? order.product.store.storeName : null,
-          storeLocation: order.product.store
-            ? order.product.store.storeLocation
-            : null,
-        },
-      },
-      buyer: order.customer
-        ? {
-            customerId: order.customer._id,
-            customerName: order.customer.userName,
-            email: order.customer.email,
-            phone: order.customer.phone,
-            address: order.customer.address,
-          }
-        : null,
-      status: order.status,
-      quantity: order.quantity,
-      totalAmount: order.totalAmount,
-      orderDate: formatDate(order.createdAt),
-    }));
-
-    res.status(200).json({
-      success: true,
-      total: TotalOrders,
-      completed: Completedorders,
-      pending: Pendingorders,
-      data: orderedProducts,
-    });
-  } catch (error) {
-    console.error("Error fetching order summary:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to get order summary" });
   }
 };
 
@@ -455,7 +366,7 @@ const getOrderDetails = async (req, res) => {
       status: order.status,
       quantity: order.quantity,
       productPrice: order.productPrice,
-      deliveryCost: order.DeliveryCost,
+      deliveryCost: order.deliveryCost,
       totalAmount: order.totalAmount,
       orderDate: formatDate(order.createdAt),
     };
@@ -472,6 +383,8 @@ const getOrderDetails = async (req, res) => {
   }
 };
 
+
+
 module.exports = {
   addProduct,
   getProducts,
@@ -482,8 +395,6 @@ module.exports = {
   getProductsByDepartmentAndType,
   updateProduct,
   deleteProduct,
-  checkInventory,
   checkdatafromstore,
-  getOrderSummary,
   getOrderDetails,
 };

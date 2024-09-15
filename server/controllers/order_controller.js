@@ -1,6 +1,5 @@
 const Order = require("../models/orderModel");
 const Product = require("../models/productModel");
-const Store = require("../models/storeModel");
 const sendEmail = require("../services/email_service");
 const { generateBill } = require("../services/bill_service");
 const {
@@ -9,8 +8,9 @@ const {
   cancelOrderEmailContent,
 } = require("../templates/email_template");
 
+// Add new order
 const addOrder = async (req, res) => {
-  const { productId, quantity, deliverySlotId } = req.body;
+  const { productId, quantity, deliveryOption } = req.body;
   try {
     const product = await Product.findById(productId);
     if (!product) {
@@ -24,20 +24,11 @@ const addOrder = async (req, res) => {
         .status(400)
         .json({ success: false, message: "Not enough product in stock" });
     }
-    const deliverySlot = await Store.findOne(
-      { "deliverySlots._id": deliverySlotId },
-      { "deliverySlots.$": 1 }
-    );
-    if (!deliverySlot || !deliverySlot.deliverySlots.length) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Delivery slot not found" });
-    }
 
-    const deliverySlotCost = deliverySlot.deliverySlots[0].cost;
+    const { label, price, tag } = deliveryOption;
+
     const productPrice = product.price * quantity;
-
-    const totalAmount = productPrice + deliverySlotCost;
+    const totalAmount = productPrice + price;
 
     const order = await Order.create({
       product: productId,
@@ -45,9 +36,13 @@ const addOrder = async (req, res) => {
       customer: req.user._id,
       seller: product.seller,
       productPrice: productPrice,
-      DeliveryCost: deliverySlotCost,
+      deliveryCost: price,
       totalAmount: totalAmount,
-      deliverySlot: deliverySlotId,
+      deliveryTime: {
+        label,
+        price,
+        tag,
+      },
     });
 
     product.quantity -= quantity;
@@ -56,10 +51,18 @@ const addOrder = async (req, res) => {
     await sendEmail(
       req.user.email,
       "Order Placed - FreshFinds",
-      orderEmailContent(req.user, order, product, quantity,productPrice,deliverySlotCost, totalAmount)
+      orderEmailContent(
+        req.user,
+        order,
+        product,
+        quantity,
+        productPrice,
+        price,
+        totalAmount
+      )
     );
 
-    const bill = await generateBill(order._id, deliverySlotCost);
+    const bill = await generateBill(order._id, price);
 
     res.status(201).json({ success: true, data: order, bill: bill });
   } catch (error) {
@@ -72,50 +75,59 @@ const addOrder = async (req, res) => {
   }
 };
 
+// Cancel order by customer
 const cancelOrder = async (req, res) => {
   const { orderId } = req.params;
   try {
-    const Cancel = await Order.findById(orderId);
+    const order = await Order.findById(orderId);
 
-    if (!Cancel) {
-      return res.status(404).json({ message: "Order not Found" });
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
     }
 
-    if (Cancel.status == "cancelled") {
-      return res.status(400).json({ message: "Order is already Cancelled" });
+    if (order.status === "cancelled") {
+      return res.status(400).json({ message: "Order is already cancelled" });
     }
 
-    Cancel.status = "cancelled";
-    await Cancel.save();
-    res
-      .status(200)
-      .json({ message: "Order Cancelled By Customer Successfully" });
-    sendEmail(
+    order.status = "cancelled";
+    await order.save();
+
+    await sendEmail(
       req.user.email,
       "Order Cancelled - FreshFinds",
       cancelOrderEmailContent(req.user, orderId)
     );
+
+    res.status(200).json({ message: "Order cancelled successfully" });
   } catch (error) {
-    console.log("Error While Cancelling Order:", error);
+    console.log("Error while cancelling order:", error);
     res.status(500).json({ message: "Failed to cancel order" });
   }
 };
 
+// Cancel order by seller
 const cancelOrderSeller = async (req, res) => {
   const { orderId } = req.params;
   try {
     const order = await Order.findByIdAndDelete(orderId);
     if (!order) {
-      return res.status(404).send({ message: "Order Doesnt Exists" });
+      return res.status(404).json({ message: "Order doesn't exist" });
     }
-    return res
-      .status(200)
-      .send({ message: "Order Canceled By Seller Successfully." });
+
+    await sendEmail(
+      order.customer.email,
+      "Order Cancelled by Seller - FreshFinds",
+      cancelOrderEmailContent(order.customer, orderId)
+    );
+
+    res.status(200).json({ message: "Order cancelled by seller successfully" });
   } catch (error) {
-    console.log("Internal Server Error", error);
+    console.log("Internal server error", error);
+    res.status(500).json({ message: "Failed to cancel order by seller" });
   }
 };
 
+// Get customer orders
 const getOrder = async (req, res) => {
   try {
     const formatDate = (isoString) => {
@@ -126,9 +138,11 @@ const getOrder = async (req, res) => {
 
       return `${month} ${day}, ${year}`;
     };
+
     const orders = await Order.find({ customer: req.user._id }).populate(
       "product"
     );
+
     const orderData = orders.map((order) => ({
       orderId: order._id,
       product: {
@@ -157,6 +171,7 @@ const getOrder = async (req, res) => {
       totalAmount: order.totalAmount,
       orderDate: formatDate(order.createdAt),
     }));
+
     res.status(200).json(orderData);
   } catch (error) {
     console.error(error);
@@ -164,10 +179,11 @@ const getOrder = async (req, res) => {
   }
 };
 
+// Get orders for a seller
 const getOrdersBySeller = async (req, res) => {
   try {
-    const orders = await Order.find({ "products.product.seller": req.user._id })
-      .populate("products.product")
+    const orders = await Order.find({ seller: req.user._id })
+      .populate("product")
       .exec();
 
     res.status(200).json(orders);
@@ -177,6 +193,7 @@ const getOrdersBySeller = async (req, res) => {
   }
 };
 
+// Update order status
 const updateOrderStatus = async (req, res) => {
   try {
     const { orderId } = req.params;
@@ -187,20 +204,25 @@ const updateOrderStatus = async (req, res) => {
       { status },
       { new: true }
     ).populate("customer");
-    console.log(updatedOrder);
-    
+
     if (!updatedOrder) {
       return res.status(404).json({ error: "Order not found" });
     }
 
-    res
-      .status(200)
-      .send({ message: "Order Status Updated Successfully", updatedOrder });
     await sendEmail(
       updatedOrder.customer.email,
       "Order Status Updated - FreshFinds",
-      orderStatusUpdateEmailContent(updatedOrder.customer, updatedOrder, status)
+      orderStatusUpdateEmailContent(
+        updatedOrder.customer,
+        updatedOrder,
+        status
+      )
     );
+
+    res.status(200).json({
+      message: "Order status updated successfully",
+      updatedOrder,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal server error" });
