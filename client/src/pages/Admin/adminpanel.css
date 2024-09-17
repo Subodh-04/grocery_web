@@ -197,3 +197,22 @@ button:hover {
 .shadow-lg {
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
 }
+
+
+.users-section .card {
+  border-radius: 10px;
+  overflow: hidden;
+  transition: transform 0.2s ease-in-out;
+}
+
+.users-section .card:hover {
+  transform: scale(1.03);
+}
+
+.users-section .card-body {
+  padding: 20px;
+}
+
+.users-section .card-footer {
+  background-color: #f8f9fa;
+}

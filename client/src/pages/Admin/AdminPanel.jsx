@@ -30,6 +30,7 @@ import "./adminpanel.css";
 export default function AdminPanel() {
   const [activeSection, setActiveSection] = useState("sales");
   const [users, setUsers] = useState([]);
+  const [usersData, setUsersData] = useState([]);
   const [loaderStatus, setLoaderStatus] = useState(false);
   const [loggeduser, setLoggedUser] = useState([]);
   const [userDetails, setUserDetails] = useState({
@@ -171,6 +172,7 @@ export default function AdminPanel() {
 
   useEffect(() => {
     fetchUsers();
+    fetchAllUsers();
   }, []);
 
   const fetchUsers = async () => {
@@ -193,6 +195,35 @@ export default function AdminPanel() {
       setLoaderStatus(false);
     }
   };
+  const unverifiedSellers = usersData.filter((user) => !user.verified);
+  const verifiedSellers = usersData.filter((user) => user.verified);
+  const fetchAllUsers = async () => {
+    try {
+      const userData = JSON.parse(localStorage.getItem("userData"));
+      const response = await axios.get(
+        "http://localhost:5000/api/admin/allusers",
+        {
+          headers: {
+            Authorization: `Bearer ${userData.token}`,
+          },
+        }
+      );
+      console.log("all users:", response.data);
+      setUsersData(response.data.users);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    } finally {
+      setLoaderStatus(false);
+    }
+  };
+
+  const [selectedRole, setSelectedRole] = useState("all");
+
+  // Filter the users based on the selected role
+  const filteredUsers =
+    selectedRole === "all"
+      ? usersData
+      : usersData.filter((user) => user.role === selectedRole);
 
   const generateDummyData = () => {
     const today = new Date();
@@ -255,7 +286,7 @@ export default function AdminPanel() {
             productsCount: response.data.data.productsCount,
             customersCount: response.data.data.customersCount,
             totalSales: response.data.data.totalSalesAmount,
-            salesArray: generateDummyData(),
+            salesArray: response.data.data.salesArray,
           });
         })
         .catch((error) => {
@@ -380,8 +411,70 @@ export default function AdminPanel() {
           ) : (
             <div className="content">
               {activeSection === "users" && (
-                <section>
-                  <h3>Users</h3>
+                <section className="users-section">
+                  <h3 className="mb-4">Users</h3>
+
+                  {/* Role Filter Dropdown */}
+                  <div className="mb-4 d-flex align-items-center">
+                    <label htmlFor="roleFilter" className="mr-3">
+                      Filter by Role:
+                    </label>
+                    <select
+                      id="roleFilter"
+                      className="form-control w-auto"
+                      value={selectedRole}
+                      onChange={(e) => setSelectedRole(e.target.value)}
+                    >
+                      <option value="all">All Roles</option>
+                      <option value="customer">Customer</option>
+                      <option value="seller">Seller</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  </div>
+
+                  {/* Users Cards */}
+                  <div
+                    className="row"
+                    style={{ maxHeight: "520px", overflowY: "auto" }}
+                  >
+                    {filteredUsers.map((user, index) => (
+                      <div className="col-md-4 mb-4" key={user._id}>
+                        <div className="card h-100 shadow-sm">
+                          <div className="card-body">
+                            <div className="d-flex justify-content-between align-items-center mb-3">
+                              <h5 className="card-title">{user.userName}</h5>
+                              <span
+                                className={`badge ${
+                                  user.verified
+                                    ? "badge-success"
+                                    : "badge-danger"
+                                }`}
+                              >
+                                {user.verified ? "Verified" : "Not Verified"}
+                              </span>
+                            </div>
+                            <p className="card-text">
+                              <strong>Email:</strong> {user.email}
+                            </p>
+                            <p className="card-text">
+                              <strong>Role:</strong> {user.role}
+                            </p>
+                            <p className="card-text">
+                              <strong>Phone:</strong> {user.phone}
+                            </p>
+                          </div>
+                          <div className="card-footer d-flex justify-content-between">
+                            <button className="btn btn-sm btn-primary">
+                              View Details
+                            </button>
+                            <button className="btn btn-sm btn-danger">
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </section>
               )}
 
@@ -465,29 +558,68 @@ export default function AdminPanel() {
               )}
 
               {activeSection === "sellers" && (
-                <section>
-                  <h3>Sellers Verify</h3>
-                  <ul className="list-group">
-                    {users.map((user) => (
-                      <li
-                        key={user.id}
-                        className="list-group-item d-flex justify-content-between align-items-center"
-                      >
-                        <div>
-                          <h5>{user.userName}</h5>
-                          <p>{user.email}</p>
-                        </div>
-                        <button
-                          className="btn btn-primary"
-                          onClick={() => {
-                            handleVerifySeller(user.id);
-                          }}
-                        >
-                          Verify Seller
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
+                <section className="sellers-section">
+                  <h3 className="mb-4">Sellers Verification</h3>
+
+                  {/* Unverified Sellers Section */}
+                  {unverifiedSellers.length > 0 && (
+                    <div>
+                      <h4 className="mb-3 text-danger">Unverified Sellers</h4>
+                      <ul className="list-group list-unstyled">
+                        {unverifiedSellers.map((user) => (
+                          <li
+                            key={user._id}
+                            className="list-group-item py-3 px-4 mb-3 shadow-sm bg-white"
+                            style={{
+                              borderLeft: "6px solid #dc3545",
+                            }}
+                          >
+                            <div className="d-flex justify-content-between align-items-center">
+                              <div>
+                                <h5 className="text-danger">{user.userName}</h5>
+                                <p className="mb-1">{user.email}</p>
+                                <span className="badge badge-warning">
+                                  Unverified Seller
+                                </span>
+                              </div>
+                              <button
+                                className="btn btn-primary"
+                                onClick={() => handleVerifySeller(user.id)}
+                              >
+                                Verify Seller
+                              </button>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Verified Sellers Section */}
+                  {verifiedSellers.length > 0 && (
+                    <div className="mt-5">
+                      <h4 className="mb-3 text-success">Verified Sellers</h4>
+                      <ul className="list-group list-unstyled">
+                        {verifiedSellers.map((user) => (
+                          <li
+                            key={user._id}
+                            className="list-group-item py-3 px-4 mb-3 shadow-sm bg-light"
+                            style={{
+                              borderLeft: "6px solid #28a745",
+                            }}
+                          >
+                            <div className="d-flex justify-content-between align-items-center flex-row">
+                              <div><h5 className="text-success">{user.userName}</h5>
+                              <p className="mb-1">{user.email}</p></div>
+                              <span className="badge badge-success">
+                                Verified Seller
+                              </span>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </section>
               )}
 

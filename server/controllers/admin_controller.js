@@ -4,7 +4,7 @@ const sendEmail = require("../services/email_service");
 const { sellerApprovalEmailContent } = require("../templates/email_template");
 const Product = require("../models/productModel");
 
-const getUsers = async (req, res) => {
+const getSellers = async (req, res) => {
   try {
     const users = await User.find({ verified: false });
     const formattedUsers = users.map((user) => ({
@@ -20,6 +20,28 @@ const getUsers = async (req, res) => {
       updatedAt: user.updatedAt,
     }));
     res.status(200).json({ users: formattedUsers });
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find();
+    const totalusers=await User.countDocuments();
+    const formattedUsers = users.map((user) => ({
+      id: user._id,
+      userName: user.userName,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+      isAdmin: user.isAdmin,
+      verified: user.verified,
+      address: user.address,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    }));
+    res.status(200).send({ totalUsers:totalusers,users: formattedUsers });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
   }
@@ -103,4 +125,4 @@ const getSalesReports = async (req, res) => {
   }
 };
 
-module.exports = { getUsers, verifySeller, getSalesReports };
+module.exports = { getSellers,getAllUsers, verifySeller, getSalesReports };

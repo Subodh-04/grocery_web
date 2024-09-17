@@ -6,6 +6,7 @@ const {
   getOrdersBySeller,
   updateOrderStatus,
   cancelOrderSeller,
+  stripePayment,
 } = require("../controllers/order_controller");
 const { protect, authorize } = require("../middlewares/auth_middleware");
 const { addToCart, decreasequantityfromcart, removefromcart, viewCart, increasequantityincart } = require("../controllers/cart_controller");
@@ -23,5 +24,6 @@ router.patch("/cancelC/:orderId", protect, authorize("customer"), cancelOrder);
 router.patch("/cancelS/:orderId", protect, authorize("seller"), cancelOrderSeller);
 router.get("/seller", protect, authorize("seller"), getOrdersBySeller);
 router.put("/:orderId", protect, authorize("seller"), updateOrderStatus);
+router.post("/create-payment-intent", protect, authorize("customer"), stripePayment);
 
 module.exports = router;

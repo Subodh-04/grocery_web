@@ -8,6 +8,10 @@ const {
   cancelOrderEmailContent,
 } = require("../templates/email_template");
 
+const stripe = require("stripe")(
+  "sk_test_51PzviN1hYkTOanlJkGJbY3Ssv39dEeAwDJdaMzMtozx7LymhdFvsFmb1J0YGClqmMDBwq6ss8MD4QSw1aLCoEoR300RsoBwqQ7"
+);
+
 // Add new order
 const addOrder = async (req, res) => {
   const { productId, quantity, deliveryOption } = req.body;
@@ -210,11 +214,7 @@ const updateOrderStatus = async (req, res) => {
     await sendEmail(
       updatedOrder.customer.email,
       "Order Status Updated - FreshFinds",
-      orderStatusUpdateEmailContent(
-        updatedOrder.customer,
-        updatedOrder,
-        status
-      )
+      orderStatusUpdateEmailContent(updatedOrder.customer, updatedOrder, status)
     );
 
     res.status(200).json({
@@ -227,6 +227,35 @@ const updateOrderStatus = async (req, res) => {
   }
 };
 
+const stripePayment = async (req, res) => {
+  const { amount } = req.body; // Amount in paise
+
+  try {
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      line_items: [
+        {
+          price_data: {
+            currency: "inr",
+            product_data: {
+              name: "Sample Product",
+            },
+            unit_amount: amount,
+          },
+          quantity: 1,
+        },
+      ],
+      mode: "payment",
+      success_url: "http://localhost:3000/success",
+      cancel_url: "http://localhost:3000/cancel",
+    });
+
+    res.json({ id: session.id });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   addOrder,
   cancelOrder,
@@ -234,4 +263,5 @@ module.exports = {
   getOrder,
   getOrdersBySeller,
   updateOrderStatus,
+  stripePayment,
 };
