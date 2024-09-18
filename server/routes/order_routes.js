@@ -24,6 +24,5 @@ router.patch("/cancelC/:orderId", protect, authorize("customer"), cancelOrder);
 router.patch("/cancelS/:orderId", protect, authorize("seller"), cancelOrderSeller);
 router.get("/seller", protect, authorize("seller"), getOrdersBySeller);
 router.put("/:orderId", protect, authorize("seller"), updateOrderStatus);
-router.post("/create-payment-intent", protect, authorize("customer"), stripePayment);
 
 module.exports = router;

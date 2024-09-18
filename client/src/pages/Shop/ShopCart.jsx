@@ -149,7 +149,7 @@ const ShopCart = () => {
                               checkout now!
                             </Link>
                           </div>
-                          <ul className="list-group list-group-flush">
+                          <ul className="list-group list-group-flush" style={{maxHeight:"400px",overflowY:"auto", overflowX:"hidden"}}>
                             {cart.map((item) => (
                               <li
                                 className="list-group-item py-3 py-lg-0 px-0 border-top"

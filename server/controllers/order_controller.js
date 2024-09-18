@@ -7,6 +7,7 @@ const {
   orderStatusUpdateEmailContent,
   cancelOrderEmailContent,
 } = require("../templates/email_template");
+const User = require("../models/userModel");
 
 const stripe = require("stripe")(
   "sk_test_51PzviN1hYkTOanlJkGJbY3Ssv39dEeAwDJdaMzMtozx7LymhdFvsFmb1J0YGClqmMDBwq6ss8MD4QSw1aLCoEoR300RsoBwqQ7"
@@ -14,63 +15,122 @@ const stripe = require("stripe")(
 
 // Add new order
 const addOrder = async (req, res) => {
-  const { productId, quantity, deliveryOption } = req.body;
   try {
-    const product = await Product.findById(productId);
-    if (!product) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Product not found" });
-    }
+    const { items, deliveryOption } = req.body;
 
-    if (product.quantity < quantity) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Not enough product in stock" });
+    let totalAmount = 0;
+    let orderItems = [];
+
+    for (let item of items) {
+      const { productId, quantity } = item;
+
+      const product = await Product.findById(productId);
+      if (!product) {
+        return res
+          .status(404)
+          .json({ success: false, message: `Product ${productId} not found` });
+      }
+
+      if (product.quantity < quantity) {
+        return res.status(400).json({
+          success: false,
+          message: `Not enough stock for product ${productId}`,
+        });
+      }
+
+      const productPrice = product.price * quantity;
+      totalAmount += productPrice;
+
+      // Add item to order items
+      orderItems.push({
+        product: productId,
+        quantity,
+        productPrice,
+        seller: product.seller,
+      });
+
+      // Update product quantity
+      product.quantity -= quantity;
+      await product.save();
     }
 
     const { label, price, tag } = deliveryOption;
+    const deliveryCost = price;
+    totalAmount += deliveryCost;
 
-    const productPrice = product.price * quantity;
-    const totalAmount = productPrice + price;
-
+    // Create the order
     const order = await Order.create({
-      product: productId,
-      quantity,
+      products: orderItems,
       customer: req.user._id,
-      seller: product.seller,
-      productPrice: productPrice,
-      deliveryCost: price,
-      totalAmount: totalAmount,
+      deliveryCost,
+      totalAmount,
       deliveryTime: {
         label,
-        price,
+        price: deliveryCost,
         tag,
       },
     });
 
-    product.quantity -= quantity;
-    await product.save();
+    console.log("New order object:", order);
 
-    await sendEmail(
-      req.user.email,
-      "Order Placed - FreshFinds",
-      orderEmailContent(
-        req.user,
-        order,
-        product,
-        quantity,
-        productPrice,
-        price,
-        totalAmount
-      )
+    // Clear the user's cart
+    await User.findByIdAndUpdate(req.user._id, { cart: [] });
+
+    // Prepare line items for Stripe
+    const line_items = items.map((item) => {
+      if (!item.price || isNaN(item.price)) {
+        throw new Error(`Invalid price for item: ${item.name}`);
+      }
+      return {
+        price_data: {
+          currency: "inr",
+          product_data: {
+            name: item.name,
+          },
+          unit_amount: Math.round(item.price * 100), // Ensure price is in correct format
+        },
+        quantity: item.quantity,
+      };
+    });
+
+    // Add delivery charges
+    line_items.push({
+      price_data: {
+        currency: "inr",
+        product_data: {
+          name: "Delivery Charges",
+        },
+        unit_amount: deliveryCost * 100, // Delivery fee in the smallest currency unit
+      },
+      quantity: 1,
+    });
+
+    // Ensure total amount is above minimum threshold (₹37.00)
+    const totalStripeAmount = line_items.reduce(
+      (total, item) => total + item.price_data.unit_amount * item.quantity,
+      0
     );
+    if (totalStripeAmount < 3700) {
+      // Minimum amount of ₹37.00
+      return res.status(400).json({
+        success: false,
+        message: "Total amount is too low. Minimum amount is ₹37.00",
+      });
+    }
 
-    const bill = await generateBill(order._id, price);
+    // Create Stripe checkout session
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      line_items,
+      mode: "payment",
+      success_url: `http://localhost:5000/verify?success=true&orderId=${order._id}`,
+      cancel_url: `http://localhost:5000/verify?success=false&orderId=${order._id}`,
+    });
 
-    res.status(201).json({ success: true, data: order, bill: bill });
+    // Respond with the session URL
+    res.json({ success: true, session_url: session.url });
   } catch (error) {
-    console.error(error);
+    console.error("Error adding order:", error);
     res.status(500).json({
       success: false,
       message: "Failed to add order",
@@ -227,35 +287,6 @@ const updateOrderStatus = async (req, res) => {
   }
 };
 
-const stripePayment = async (req, res) => {
-  const { amount } = req.body; // Amount in paise
-
-  try {
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      line_items: [
-        {
-          price_data: {
-            currency: "inr",
-            product_data: {
-              name: "Sample Product",
-            },
-            unit_amount: amount,
-          },
-          quantity: 1,
-        },
-      ],
-      mode: "payment",
-      success_url: "http://localhost:3000/success",
-      cancel_url: "http://localhost:3000/cancel",
-    });
-
-    res.json({ id: session.id });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
 module.exports = {
   addOrder,
   cancelOrder,
@@ -263,5 +294,4 @@ module.exports = {
   getOrder,
   getOrdersBySeller,
   updateOrderStatus,
-  stripePayment,
 };
