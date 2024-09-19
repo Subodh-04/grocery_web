@@ -136,6 +136,23 @@ function Dropdown() {
     gridgap: "row row-cols-4 row-cols-md-4",
   };
 
+  const [sortproducts, setSortproducts] = useState("Featured");
+
+  const handleSortChange = (e) => {
+    const sortingCriteria = e.target.value;
+    setSortproducts(sortingCriteria);
+
+    let sorted = [...products]; // Create a copy of the products array
+    if (sortingCriteria === "Low to High") {
+      sorted.sort((a, b) => a.price - b.price);
+    } else if (sortingCriteria === "High to Low") {
+      sorted.sort((a, b) => b.price - a.price);
+    }
+
+    setProducts(sorted); // Update the sorted products in the state
+  };
+
+
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
   const currentProducts = products.slice(
@@ -279,12 +296,11 @@ function Dropdown() {
                       <select
                         className="form-select"
                         aria-label="Default select example"
+                        onChange={handleSortChange}
                       >
                         <option selected>Sort by: Featured</option>
                         <option value="Low to High">Price: Low to High</option>
-                        <option value="High to Low"> Price: High to Low</option>
-                        <option value="Release Date"> Release Date</option>
-                        <option value="Avg. Rating"> Avg. Rating</option>
+                        <option value="High to Low">Price: High to Low</option>
                       </select>
                     </div>
                   </div>

@@ -118,7 +118,7 @@ export default function AdminPanel() {
       );
       console.log("password request:", response.data);
 
-      alert(response.data.message);
+      toast.success(response.data.message);
     } catch (error) {
       console.error("Error requesting password reset:", error);
     }
@@ -141,10 +141,10 @@ export default function AdminPanel() {
         }
       );
       if (!response) {
-        alert(response.data.message);
+        toast.error(response.data.message);
         console.log(response.data.message);
       }
-      alert(response.data.message);
+      toast.success(response.data.message);
       setUserDetails({
         ...userDetails,
         currentPassword: "",
@@ -163,7 +163,7 @@ export default function AdminPanel() {
         headers: { Authorization: `Bearer ${userData.token}` },
       });
       localStorage.removeItem("userData");
-      alert("Account deleted successfully!");
+      toast.info("Account deleted successfully!");
       window.location.href = "/";
     } catch (error) {
       console.error("Error deleting account:", error);
@@ -301,7 +301,7 @@ export default function AdminPanel() {
 
   const handleLogout = () => {
     localStorage.removeItem("userData");
-    alert("Logged out successfully!");
+    toast.success("Logged out successfully!");
     navigate("/MyAccountSignIn");
   };
 
@@ -317,7 +317,7 @@ export default function AdminPanel() {
           },
         }
       );
-      alert(response.data.message);
+      toast.success(response.data.message);
       fetchUsers(); // Refresh user list
     } catch (error) {
       console.error("Error verifying seller:", error);

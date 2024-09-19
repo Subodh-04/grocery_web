@@ -31,58 +31,77 @@ const getOrderSummary = async (req, res) => {
       return `${day}/${month}/${year} ${hours}:${minutes}`;
     };
 
-    const orders = await Order.find({ seller: req.user._id })
+    // Fetch orders where the logged-in seller is the seller of the products
+    const orders = await Order.find({ "products.seller": req.user._id })
       .populate({
-        path: "product",
+        path: "products.product",
+        select: "name prod_img type description price seller",
         populate: {
           path: "store",
           model: "Store",
+          select: "storeName storeLocation",
         },
       })
-      .populate("customer");
+      .populate({
+        path: "customer",
+        select: "userName email phone address",
+      });
 
-    const TotalOrders = await Order.countDocuments({ seller: req.user._id });
+    // Aggregate order statistics
+    const TotalOrders = await Order.countDocuments({
+      "products.seller": req.user._id,
+    });
     const Completedorders = await Order.countDocuments({
-      seller: req.user._id,
-      status: "completed",
+      "products.seller": req.user._id,
+      "products.status": "completed",
     });
     const Pendingorders = await Order.countDocuments({
-      seller: req.user._id,
-      status: "pending",
+      "products.seller": req.user._id,
+      "products.status": "pending",
     });
 
-    const orderedProducts = orders.map((order) => ({
-      orderId: order._id,
-      product: {
-        productId: order.product._id,
-        productName: order.product.name,
-        productImage: order.product.prod_img,
-        type: order.product.type,
-        description: order.product.description,
-        productPrice: order.product.price,
-        sellerId: order.product.seller,
-        store: {
-          storeId: order.product.store ? order.product.store._id : null,
-          storeName: order.product.store ? order.product.store.storeName : null,
-          storeLocation: order.product.store
-            ? order.product.store.storeLocation
-            : null,
-        },
-      },
-      buyer: order.customer
-        ? {
-            customerId: order.customer._id,
-            customerName: order.customer.userName,
-            email: order.customer.email,
-            phone: order.customer.phone,
-            address: order.customer.address,
-          }
-        : null,
-      status: order.status,
-      quantity: order.quantity,
-      totalAmount: order.totalAmount,
-      orderDate: formatDate(order.createdAt),
-    }));
+    // Format the ordered products
+    const orderedProducts = orders.map((order) => {
+      // Filter products to include only those from the logged-in seller
+      const filteredProducts = order.products.filter(
+        (product) => product.seller.toString() === req.user._id.toString()
+      );
+
+      return {
+        orderId: order._id,
+        products: filteredProducts.map((product) => ({
+          productId: product.product._id,
+          productName: product.product.name,
+          productImage: product.product.prod_img,
+          type: product.product.type,
+          description: product.product.description,
+          productPrice: product.product.price,
+          sellerId: product.product.seller,
+          store: {
+            storeId: product.product.store ? product.product.store._id : null,
+            storeName: product.product.store
+              ? product.product.store.storeName
+              : null,
+            storeLocation: product.product.store
+              ? product.product.store.storeLocation
+              : null,
+          },
+          quantity: product.quantity,
+          status: product.status,
+        })),
+        buyer: order.customer
+          ? {
+              customerId: order.customer._id,
+              customerName: order.customer.userName,
+              email: order.customer.email,
+              phone: order.customer.phone,
+              address: order.customer.address,
+            }
+          : null,
+        totalAmount: order.totalAmount,
+        orderDate: formatDate(order.createdAt),
+      };
+    });
 
     res.status(200).json({
       success: true,
@@ -146,9 +165,91 @@ const searchProducts = async (req, res) => {
   }
 };
 
+const updateProductStatus = async (req, res) => {
+  const { orderId, productId, newStatus } = req.body;
+  const sellerId = req.user.id; // Assuming the sellerId is retrieved from the JWT token
+
+  try {
+    // Find the order by orderId and make sure the seller matches
+    const order = await Order.findOne({
+      _id: orderId,
+      "products.product": productId, // Use the 'product' field from your data structure
+      "products.seller": sellerId, // Ensure the seller matches the sellerId
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order or product not found or not authorized",
+      });
+    }
+
+    // Find the specific product within the order's products array
+    const productIndex = order.products.findIndex(
+      (p) => p.product.toString() === productId
+    );
+
+    if (productIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found in the order",
+      });
+    }
+
+    // Update the status of the product within the array
+    order.products[productIndex].status = newStatus;
+    await updateOrderStatus(orderId);
+    // Save the updated order with the new status
+    await order.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Product status updated successfully",
+      data: order,
+    });
+  } catch (error) {
+    console.error("Error updating product status:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+const updateOrderStatus = async (orderId) => {
+  try {
+    const order = await Order.findById(orderId).populate('products.product');
+    if (!order) throw new Error("Order not found");
+
+    const allProductsDelivered = order.products.every(
+      (product) => product.status === "completed"
+    );
+    const anyProductDelivering = order.products.some(
+      (product) => product.status === "delivering"
+    );
+
+    if (allProductsDelivered) {
+      order.orderStatus = "completed";
+      order.paymentStatus="paid";
+    } else if (anyProductDelivering) {
+      order.orderStatus = "delivering";
+    } else {
+      order.orderStatus = "pending";
+    }
+
+    await order.save();
+    return order;
+  } catch (error) {
+    console.error("Error updating order status:", error);
+    throw error;
+  }
+};
+
+
 module.exports = {
   checkInventory,
   getOrderSummary,
   removefromcart,
   searchProducts,
+  updateProductStatus,
 };

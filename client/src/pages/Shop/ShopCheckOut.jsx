@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { MagnifyingGlass } from "react-loader-spinner";
 import ScrollToTop from "../ScrollToTop";
 import axios from "axios";
 import { loadStripe } from "@stripe/stripe-js";
+import { toast } from "react-toastify";
 
 const ShopCheckOut = () => {
   // loading
@@ -13,6 +14,8 @@ const ShopCheckOut = () => {
       setLoaderStatus(false);
     }, 1500);
   }, []);
+
+  const navigate = useNavigate();
 
   const [cart, setCart] = useState([]);
   const [totalAmount, setTotalAmount] = useState(0);
@@ -52,50 +55,55 @@ const ShopCheckOut = () => {
     fetchUserAddress();
   }, []);
 
+  const [paymentMethod, setPaymentMethod] = useState("COD");
+
   const placeOrder = async () => {
-    if (!selectedAddress._id || !deliveryOption || !cart.length) {
-      alert(
-        "Please select an address, delivery option, and add items to your cart."
-      );
+    if (!selectedAddress._id || !deliveryOption) {
+      toast.info("Please select an address and delivery option.");
       return;
     }
+  
     try {
       const userData = JSON.parse(localStorage.getItem("userData"));
-      const orderData = {
-        items: cart.map((item) => ({
-          productId: item.productId,
-          name: item.name,
-          quantity: item.quantity,
-          price: item.price,
-        })),
-        deliveryOption,
-      };
-
-      const res = await axios.post(
+      const response = await axios.post(
         "http://localhost:5000/api/order",
-        orderData,
+        {
+          items: cart.map((item) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+          })),
+          deliveryOption,
+          paymentMethod,
+          deliveryAddress: {
+            street: selectedAddress.street,
+            city: selectedAddress.city,
+            postalCode: selectedAddress.zip,
+            country: selectedAddress.country,
+          },
+        },
         {
           headers: {
             Authorization: `Bearer ${userData.token}`,
           },
         }
       );
-
-      if (res.data) {
-        window.location.href = res.data.session_url;
+  
+      if (response.data.success) {
+        if (paymentMethod === "Stripe") {
+          window.location.href = response.data.session_url;
+        } else {
+          toast.success(response.data.message);
+          navigate("/MyAccountOrder");
+        }
       } else {
-        alert("Failed to create order.");
+        toast.success(response.data.message);
       }
     } catch (error) {
-      console.error(
-        "Error placing order:",
-        error.response.data || error.message || error
-      );
-      alert("An error occurred while placing the order.");
+      console.error("Error placing order:", error.response);
+      toast.error("An error occurred while placing the order.");
     }
   };
-  console.log(cart);
-
+  
   return (
     <div>
       {loaderStatus ? (
@@ -292,6 +300,61 @@ const ShopCheckOut = () => {
                             </div>
                           </li>
                         </ul>
+                      </div>
+                    </div>
+                    <div className="accordion-item py-4">
+                      <Link
+                        to="#"
+                        className="text-inherit collapsed h5"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#flush-collapseThree"
+                        aria-expanded="false"
+                        aria-controls="flush-collapseThree"
+                      >
+                        <i className="feather-icon icon-clock me-2 text-muted" />
+                        Payment Method
+                      </Link>
+                      <div
+                        id="flush-collapseThree"
+                        className="accordion-collapse collapse"
+                        data-bs-parent="#accordionFlushExample"
+                      >
+                        <div className="mt-4">
+                      <div className="form-check">
+                        <input
+                          type="radio"
+                          id="paymentCOD"
+                          name="paymentMethod"
+                          value="COD"
+                          checked={paymentMethod === "COD"}
+                          onChange={(e) => setPaymentMethod(e.target.value)}
+                          className="form-check-input"
+                        />
+                        <label
+                          htmlFor="paymentCOD"
+                          className="form-check-label"
+                        >
+                          Cash on Delivery (COD)
+                        </label>
+                      </div>
+                      <div className="form-check">
+                        <input
+                          type="radio"
+                          id="paymentStripe"
+                          name="paymentMethod"
+                          value="Stripe"
+                          checked={paymentMethod === "Stripe"}
+                          onChange={(e) => setPaymentMethod(e.target.value)}
+                          className="form-check-input"
+                        />
+                        <label
+                          htmlFor="paymentStripe"
+                          className="form-check-label"
+                        >
+                          Credit/Debit Card
+                        </label>
+                      </div>
+                    </div>
                       </div>
                     </div>
                   </div>

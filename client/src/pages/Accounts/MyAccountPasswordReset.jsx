@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import { toast } from "react-toastify";
 
 const MyAccountPasswordReset = () => {
   const [password, setPassword] = useState("");
@@ -30,7 +31,7 @@ const MyAccountPasswordReset = () => {
       );
 
       setMessage(response.data.message || "Password reset successful");
-      alert("Password Reset Successfull.Redirecting to SignIn Page");
+      toast.success("Password Reset Successful.Redirecting to SignIn Page");
       localStorage.removeItem("userData");
       navigate("/MyAccountSignIn")
     } catch (error) {

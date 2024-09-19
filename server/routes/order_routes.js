@@ -6,7 +6,7 @@ const {
   getOrdersBySeller,
   updateOrderStatus,
   cancelOrderSeller,
-  stripePayment,
+  verifyPayment,
 } = require("../controllers/order_controller");
 const { protect, authorize } = require("../middlewares/auth_middleware");
 const { addToCart, decreasequantityfromcart, removefromcart, viewCart, increasequantityincart } = require("../controllers/cart_controller");
@@ -14,6 +14,7 @@ const { addToCart, decreasequantityfromcart, removefromcart, viewCart, increaseq
 const router = express.Router();
 
 router.post("/", protect, authorize("customer"), addOrder);
+router.get("/verify", verifyPayment);
 router.get("/", protect, authorize("customer"), getOrder);
 router.post("/cart/add", protect, authorize("customer"), addToCart);
 router.delete("/cart/delete/:productId", protect, authorize("customer"), removefromcart);

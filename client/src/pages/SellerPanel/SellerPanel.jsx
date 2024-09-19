@@ -13,6 +13,7 @@ import axios from "axios";
 import "../../App.css";
 import { MagnifyingGlass } from "react-loader-spinner";
 import { RxCross2 } from "react-icons/rx";
+import { toast } from "react-toastify";
 
 export default function SellerPanel() {
   const [activeSection, setActiveSection] = useState("overview");
@@ -159,7 +160,7 @@ export default function SellerPanel() {
       }
     };
     fetchstoredetails();
-  }, [ hasStore]);
+  }, [hasStore]);
 
   const handleUpdateStore = async () => {
     try {
@@ -174,7 +175,7 @@ export default function SellerPanel() {
         }
       );
       setShowModal(false);
-      alert(response.data.message);
+      toast.success(response.data.message);
     } catch (error) {
       console.log("updating failed", error);
     }
@@ -221,13 +222,13 @@ export default function SellerPanel() {
       );
 
       if (response.status === 201) {
-        alert("Store created successfully!");
+        toast.success("Store created successfully!");
         setHasStore(true);
         setShowModal(false);
       }
     } catch (error) {
       console.error("Error creating store:", error);
-      alert("Failed to create store.");
+      toast.error("Failed to create store.");
     }
   };
   //update user details
@@ -250,7 +251,7 @@ export default function SellerPanel() {
         "userData",
         JSON.stringify({ ...userData, ...response.data })
       );
-      alert("Details updated successfully!");
+      toast.info("Details updated successfully!");
     } catch (error) {
       console.error("Error updating details:", error);
     }
@@ -273,7 +274,7 @@ export default function SellerPanel() {
       );
       console.log("password request:", response.data);
 
-      alert(response.data.message);
+      toast.success(response.data.message);
     } catch (error) {
       console.error("Error requesting password reset:", error);
     }
@@ -296,10 +297,10 @@ export default function SellerPanel() {
         }
       );
       if (!response) {
-        alert(response.data.message);
+        toast.error(response.data.message);
         console.log(response.data.message);
       }
-      alert(response.data.message);
+      toast.success(response.data.message);
       setUserDetails({
         ...userDetails,
         currentPassword: "",
@@ -318,7 +319,7 @@ export default function SellerPanel() {
         headers: { Authorization: `Bearer ${userData.token}` },
       });
       localStorage.removeItem("userData");
-      alert("Account deleted successfully!");
+      toast.success("Account deleted successfully!");
       window.location.href = "/";
     } catch (error) {
       console.error("Error deleting account:", error);
@@ -327,7 +328,7 @@ export default function SellerPanel() {
 
   const handleLogout = () => {
     localStorage.removeItem("userData");
-    alert("Logged out successfully!");
+    toast.success("Logged out successfully!");
     navigate("/MyAccountSignIn");
   };
 
@@ -392,7 +393,7 @@ export default function SellerPanel() {
   const [image, setImage] = useState("");
   const handleImageChange = async (image) => {
     if (!image) {
-      alert("Please select an image");
+      toast.info("Please select an image");
       return;
     }
 
@@ -410,10 +411,10 @@ export default function SellerPanel() {
         setImage(response.data.url.toString());
       } catch (err) {
         console.error(err);
-        alert("Image upload failed. Please try again.");
+        toast.error("Image upload failed. Please try again.");
       }
     } else {
-      alert("Please upload a JPEG or PNG image");
+      toast.info("Please upload a JPEG or PNG image");
     }
   };
 
@@ -441,7 +442,7 @@ export default function SellerPanel() {
       );
 
       setAddProductModal(false);
-      alert(response.data.message);
+      toast.success(response.data.message);
       setProductDet({
         name: "",
         prod_img: "",
@@ -472,10 +473,10 @@ export default function SellerPanel() {
         }
       );
       if (response.data.success === true) {
-        alert(response.data.message);
+        toast.success(response.data.message);
         console.log(response.data.message);
       }
-      alert(response.data.message);
+      toast.success(response.data.message);
     } catch (error) {
       console.log("Internal Server Error", error);
     }
@@ -521,7 +522,7 @@ export default function SellerPanel() {
 
       console.log("Updated Product Successfully:", response.data);
       setAddProductModal(false);
-      alert("Product updated successfully!");
+      toast.success("Product updated successfully!");
 
       // Reset states after saving
       setProductDet({
@@ -544,57 +545,7 @@ export default function SellerPanel() {
     }
   };
 
-  const handleViewOrderDetails = async (orderId) => {
-    try {
-      const userData = JSON.parse(localStorage.getItem("userData"));
 
-      console.log(userData);
-
-      const response = await axios.get(
-        `http://localhost:5000/api/product/orders/summary/${orderId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${userData.token}`,
-          },
-        }
-      );
-
-      if (!response) {
-        console.log("Error:", response.data.message);
-        return;
-      }
-
-      setViewDetailsModal(true);
-      setViewDetails(response.data.data);
-    } catch (error) {
-      console.log("Error While Fetching order Details", error);
-    }
-  };
-
-  const handleCancelOrder = async (orderId) => {
-    try {
-      const userData = JSON.parse(localStorage.getItem("userData"));
-      const response = await axios.patch(
-        `http://localhost:5000/api/order/cancelS/${orderId}`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${userData.token}`,
-          },
-        }
-      );
-
-      if (!response) {
-        alert(response.data.message);
-      } else {
-        alert(response.data.message);
-        console.log("Order Deleted Successfully.");
-      }
-    } catch (error) {
-      console.error("Error While Cancelling:", error.message);
-      alert("An error occurred while canceling the order. Please try again.");
-    }
-  };
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -609,10 +560,10 @@ export default function SellerPanel() {
           }
         );
 
-        if (!response) {
+        if (!response || !response.data.success) {
           console.log(response.data.message);
         } else {
-          setOrders(response.data.data);
+          setOrders(response.data.data); // Assuming response.data.data contains the list of orders
           setTotalOrders(response.data.total);
           setPendingOrders(response.data.pending);
           setCompletedOrders(response.data.completed);
@@ -623,37 +574,88 @@ export default function SellerPanel() {
     };
 
     fetchOrders();
-  }, [orders]); // Add dependencies here
+  }, [orders]);
+  // Add dependencies here
 
-  const handleStatusChange = async (orderId, status) => {
+  const handleStatusChange = async (orderId, productId, newStatus) => {
     try {
       const userData = JSON.parse(localStorage.getItem("userData"));
       const response = await axios.put(
-        `http://localhost:5000/api/order/${orderId}`,
-        { status },
+        "http://localhost:5000/api/seller/productstatus",
+        {
+          orderId,
+          productId,
+          newStatus,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${userData?.token}`, // Ensure the token exists
+          },
+        }
+      );
+  
+      if (response.data) {
+        // Update the state if the response is successful
+        setOrders((prevOrders) =>
+          prevOrders.map((order) => {
+            if (order._id === orderId) {
+              return {
+                ...order,
+                products: order.products.map((product) =>
+                  product.productId === productId
+                    ? { ...product, status: newStatus }
+                    : product
+                ),
+              };
+            }
+            return order;
+          })
+        );
+      } else {
+        console.error("Failed to update status");
+      }
+    } catch (error) {
+      console.error("Error updating status:", error);
+  
+      // Handle specific errors
+      if (error.response && error.response.data) {
+        console.error("API response error:", error.response.data.message);
+      }
+    }
+  };
+  const [orderDetails, setOrderDetails] = useState(null);
+
+  const fetchOrderDetails = async (orderId) => {
+    try {
+      const userData = JSON.parse(localStorage.getItem("userData"));
+      const response = await axios.get(
+        `http://localhost:5000/api/product/orders/summary/${orderId}`,
         {
           headers: {
             Authorization: `Bearer ${userData.token}`,
           },
         }
       );
-      console.log("Order status updated:", response.data);
-      alert(response.data.message);
+      console.log(response.data);
+      setOrderDetails(response.data.data || {});
     } catch (error) {
-      console.error("Error updating order status:", error);
+      console.log("Error Fetching Order Details:", error);
     }
   };
-
+  
   const handlePrint = () => {
-    const printContents = document.getElementById("invoice-section").innerHTML;
-
+    if (!orderDetails || !orderDetails.products) {
+      console.log("Order details are not available.");
+      return;
+    }
+  
     const printWindow = window.open("", "", "width=800,height=600");
+  
     printWindow.document.write(`
       <html>
         <head>
           <title>Invoice</title>
           <style>
-            /* Include the same CSS used in the modal */
             body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
             .container { padding: 20px; }
             .row { margin-bottom: 20px; }
@@ -661,27 +663,87 @@ export default function SellerPanel() {
             .text-muted { color: #6c757d; }
             .badge { display: inline-block; padding: 0.35em 0.65em; font-size: 75%; font-weight: 700; line-height: 1; color: #fff; text-align: center; white-space: nowrap; vertical-align: baseline; border-radius: 0.25rem; }
             .bg-success { background-color: #28a745; }
-            table { width: 100%; border-collapse: collapse; }
-            table, th, td { border: 1px solid black; }
-            th, td { padding: 10px; text-align: left; }
-            h5, h6, h4 { margin: 0; }
-            .mb-0 { margin-bottom: 0; }
-            .mb-1 { margin-bottom: 0.5rem; }
-            .mt-2 { margin-top: 0.5rem; }
-            .table-bordered { border: 1px solid #dee2e6; }
-            thead th { background-color: #f8f9fa; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+            table, th, td { border: 1px solid #dee2e6; }
+            th, td { padding: 12px; text-align: left; }
+            .invoice-header { display: flex; justify-content: space-between; }
+            .invoice-header h2 { margin-bottom: 5px; }
+            .invoice-header p { margin: 0; }
+            .invoice-details { margin-top: 20px; }
+            .invoice-summary { background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 20px; }
+            .invoice-summary h5 { margin-bottom: 10px; }
+            .invoice-total { font-weight: bold; background-color: #e9ecef; padding: 10px; }
           </style>
         </head>
         <body>
-          ${printContents}
+          <div class="container">
+            <div class="invoice-header">
+              <div>
+                <h2>Invoice</h2>
+              </div>
+              <div class="text-end">
+                <p>Invoice Date: ${new Date().toLocaleDateString()}</p>
+                <p>Order No: #${orderDetails.orderId}</p>
+                <p>Status: ${orderDetails.status}</p>
+              </div>
+            </div>
+  
+            <div class="invoice-details">
+              <h5>Billed To:</h5>
+              <p>
+                ${orderDetails.buyer.customerName || "N/A"} <br/>
+                ${orderDetails.buyer.email || "N/A"} <br/>
+                ${orderDetails.buyer.phone || "N/A"} <br/>
+                ${orderDetails.buyer.address.street || "N/A"}, ${orderDetails.buyer.address.city || "N/A"}, 
+                ${orderDetails.buyer.address.postalCode || "N/A"}, ${orderDetails.buyer.address.country || "N/A"}
+              </p>
+            </div>
+  
+            <table>
+              <thead>
+                <tr>
+                  <th>No.</th>
+                  <th>Item</th>
+                  <th>Price</th>
+                  <th>Quantity</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${orderDetails.products.map((product, index) => `
+                  <tr>
+                    <td>${index + 1}</td>
+                    <td>${product.productName || "N/A"}</td>
+                    <td>${product.productPrice || 0}&#8377;</td>
+                    <td>${product.quantity || 0}</td>
+                    <td>${(product.productPrice * product.quantity) || 0}&#8377;</td>
+                  </tr>
+                `).join("")}
+                <tr>
+                  <td colspan="4" class="invoice-total">Subtotal</td>
+                  <td>${(orderDetails.totalAmount - orderDetails.deliveryCost) || 0}&#8377;</td>
+                </tr>
+                <tr>
+                  <td colspan="4" class="invoice-total">Shipping Charge</td>
+                  <td>${orderDetails.deliveryCost || 0}&#8377;</td>
+                </tr>
+                <tr>
+                  <td colspan="4" class="invoice-total">Grand Total</td>
+                  <td>${orderDetails.totalAmount || 0}&#8377;</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </body>
       </html>
     `);
+  
     printWindow.document.close();
     printWindow.focus();
     printWindow.print();
     printWindow.close();
   };
+  
 
   return (
     <div className="container-fluid" style={{ position: "fixed" }}>
@@ -1410,14 +1472,8 @@ export default function SellerPanel() {
               {activeSection === "orders" && hasStore && (
                 <div>
                   <h1 className="fw-bold">Orders</h1>
-                  <div className="card p-3 mb-3">
-                    <h5>Total Orders: {totalOrders}</h5>
-                    <h5>Pending Orders: {pendingOrders}</h5>
-                    <h5>Completed Orders: {completedOrders}</h5>
-                    <button className="btn btn-primary">
-                      Accept New Orders
-                    </button>
-                  </div>
+                  
+
                   <h4 className="mt-4">Order Details</h4>
                   <table className="table table-bordered">
                     <thead>
@@ -1431,95 +1487,74 @@ export default function SellerPanel() {
                       </tr>
                     </thead>
                     <tbody>
-                      {orders.map((order) => (
-                        <tr className="align-middle" key={order.orderId}>
-                          <td>{order.orderId}</td>
-                          <td>{order.buyer.customerName}</td>
-                          <td>{order.orderDate}</td>
-                          <td>{order.totalAmount}&#8377;</td>
-                          <td
-                            className={`badge ${
-                              order.status === "pending"
-                                ? "bg-warning text-black pe-3 ps-3"
-                                : order.status === "delivering"
-                                ? "bg-info text-white"
-                                : "bg-success text-white"
-                            } ms-3 mt-2`}
-                          >
-                            {order.status}
-                          </td>
-                          <td>
-                            <button
-                              className="btn btn-sm btn-info"
-                              onClick={() =>
-                                handleViewOrderDetails(order.orderId)
-                              }
+                      {orders.map((order) =>
+                        order.products.map((product) => (
+                          <tr className="align-middle" key={product.productId}>
+                            <td>{order.orderId}</td>
+                            <td>{order.buyer?.customerName}</td>
+                            <td>{order.orderDate}</td>
+                            <td>{product.productPrice}&#8377;</td>
+                            <td
+                              className={`badge ${
+                                product.status === "pending"
+                                  ? "bg-warning text-black"
+                                  : product.status === "delivering"
+                                  ? "bg-info text-white"
+                                  : "bg-success text-white"
+                              } ms-3 mt-2`}
                             >
-                              View Details
-                            </button>
-                            <div className="btn-group ms-2">
+                              {product.status}
+                            </td>
+                            <td>
                               <button
-                                type="button"
-                                className="btn btn-sm btn-success dropdown-toggle"
-                                data-bs-toggle="dropdown"
-                                aria-expanded="false"
+                                className="btn btn-sm btn-info"
+                                onClick={() =>{
+                                  fetchOrderDetails(order.orderId)
+                                  handlePrint()
+                                  }
+                                }
                               >
-                                Change Status
+                                View Details
                               </button>
-                              <ul className="dropdown-menu">
-                                <li>
-                                  <button
-                                    className="dropdown-item"
-                                    onClick={() =>
-                                      handleStatusChange(
-                                        order.orderId,
-                                        "pending"
-                                      )
-                                    }
-                                  >
-                                    Pending
-                                  </button>
-                                </li>
-                                <li>
-                                  <button
-                                    className="dropdown-item"
-                                    onClick={() =>
-                                      handleStatusChange(
-                                        order.orderId,
-                                        "delivering"
-                                      )
-                                    }
-                                  >
-                                    Delivering
-                                  </button>
-                                </li>
-                                <li>
-                                  <button
-                                    className="dropdown-item"
-                                    onClick={() =>
-                                      handleStatusChange(
-                                        order.orderId,
-                                        "completed"
-                                      )
-                                    }
-                                  >
-                                    Completed
-                                  </button>
-                                </li>
-                              </ul>
-                            </div>
-                            <button
-                              className="btn btn-sm btn-danger ms-2"
-                              onClick={() => handleCancelOrder(order.orderId)}
-                            >
-                              Cancel Order
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
+                              <div className="btn-group ms-2">
+                                <button
+                                  type="button"
+                                  className="btn btn-sm btn-success dropdown-toggle"
+                                  data-bs-toggle="dropdown"
+                                  aria-expanded="false"
+                                >
+                                  Change Status
+                                </button>
+                                <ul className="dropdown-menu">
+                                  {["pending", "delivering", "completed"].map(
+                                    (status) => (
+                                      <li key={status}>
+                                        <button
+                                          className="dropdown-item"
+                                          onClick={() =>
+                                            handleStatusChange(
+                                              order.orderId,
+                                              product.productId,
+                                              status
+                                            )
+                                          }
+                                        >
+                                          {status.charAt(0).toUpperCase() +
+                                            status.slice(1)}
+                                        </button>
+                                      </li>
+                                    )
+                                  )}
+                                </ul>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
 
+                  {/* Order Details Modal */}
                   {viewDetailsModal && viewDetails && (
                     <div className="modal show d-block" tabIndex="-1">
                       <div className="modal-dialog modal-lg">
@@ -1535,120 +1570,6 @@ export default function SellerPanel() {
                             ></button>
                           </div>
                           <div className="modal-body">
-                            <div id="invoice-section" className="container">
-                              {/* Invoice Header */}
-                              <div className="row mb-4">
-                                <div className="col">
-                                  <h5 className="mb-1">
-                                    {viewDetails.product.store.storeName}
-                                  </h5>
-                                  <p className="text-muted mb-0">
-                                    {viewDetails.product.store.storeLocation}
-                                  </p>
-                                  <p className="text-muted mb-0">xyz@987.com</p>
-                                  <p className="text-muted mb-0">
-                                    012-345-6789
-                                  </p>
-                                </div>
-                                <div className="col text-end">
-                                  <h6 className="text-muted">
-                                    Invoice Date: {viewDetails.orderDate}
-                                  </h6>
-                                  <h6 className="text-muted">
-                                    Order No: #1123456
-                                  </h6>
-                                  <h6 className="text-muted">
-                                    Invoice No: #{viewDetails.orderId}
-                                  </h6>
-                                  <h6 className="text-muted">
-                                    Status:{" "}
-                                    <span className="badge bg-success">
-                                      Paid
-                                    </span>
-                                  </h6>
-                                </div>
-                              </div>
-
-                              {/* Buyer Information */}
-                              <div className="row mb-4">
-                                <div className="col">
-                                  <h6>Billed To:</h6>
-                                  <p className="text-muted">
-                                    <strong>
-                                      {viewDetails.buyer.customerName}
-                                    </strong>
-                                  </p>
-                                  <p className="text-muted mb-0">
-                                    {viewDetails.buyer.email}
-                                  </p>
-                                  <p className="text-muted mb-0">
-                                    {viewDetails.buyer.phone}
-                                  </p>
-                                  <p className="text-muted mb-0">
-                                    {viewDetails.buyer.address.street}
-                                  </p>
-                                  <p className="text-muted mb-0">
-                                    {viewDetails.buyer.address.city},{" "}
-                                    {viewDetails.buyer.address.state},{" "}
-                                    {viewDetails.buyer.address.zip}
-                                  </p>
-                                </div>
-                              </div>
-
-                              {/* Order Summary */}
-                              <div className="row mb-4">
-                                <div className="col">
-                                  <h6>Order Summary</h6>
-                                  <table className="table table-bordered">
-                                    <thead>
-                                      <tr>
-                                        <th>No.</th>
-                                        <th>Item</th>
-                                        <th>Price</th>
-                                        <th>Quantity</th>
-                                        <th>Total</th>
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      <tr>
-                                        <td>01</td>
-                                        <td>
-                                          {viewDetails.product.productName}
-                                        </td>
-                                        <td>
-                                          {viewDetails.product.productPrice}
-                                        </td>
-                                        <td>{viewDetails.quantity}</td>
-                                        <td>
-                                          {viewDetails.totalAmount}&#8377;
-                                        </td>
-                                      </tr>
-                                      {/* Add more rows as necessary */}
-                                    </tbody>
-                                  </table>
-                                </div>
-                              </div>
-
-                              {/* Total Calculation */}
-                              <div className="row mb-4">
-                                <div className="col">
-                                  <div className="text-end">
-                                    <p className="mb-1">
-                                      <strong>Sub Total:</strong>
-                                      {viewDetails.totalAmount}&#8377;
-                                    </p>
-                                    <p className="mb-1">
-                                      <strong>Delivery Cost:</strong>{" "}
-                                      {viewDetails.deliveryCost}&#8377;
-                                    </p>
-                                    <h4 className="mt-2">
-                                      <strong>Total:</strong>
-                                      {viewDetails.totalAmount}&#8377;
-                                    </h4>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
                           </div>
                           <div className="modal-footer">
                             <button

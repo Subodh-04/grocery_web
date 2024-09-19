@@ -313,77 +313,94 @@ const getOrderDetails = async (req, res) => {
   try {
     const { orderId } = req.params;
 
+    // Function to format the date
     const formatDate = (isoString) => {
       const date = new Date(isoString);
-      const day = String(date.getDate()).padStart(2, "0");
-      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = date.getDate();
+      const month = date.toLocaleString("default", { month: "long" });
       const year = date.getFullYear();
-      const hours = String(date.getHours()).padStart(2, "0");
-      const minutes = String(date.getMinutes()).padStart(2, "0");
-      return `${day}/${month}/${year} ${hours}:${minutes}`;
+      return `${month} ${day}, ${year}`;
     };
 
-    // Find the order by ID and populate related data (product, customer, and store)
+    // Find the order by ID and populate related fields (product, seller, customer)
     const order = await Order.findOne({ _id: orderId })
       .populate({
-        path: "product",
+        path: "products.product",
         populate: {
           path: "store",
           model: "Store",
         },
       })
+      .populate("products.seller", "userName email store")
       .populate("customer", "-password");
 
+    // Check if order exists
     if (!order) {
       return res
         .status(404)
         .json({ success: false, message: "Order not found" });
     }
 
-    const orderDetails = {
-      orderId: order._id,
-      product: {
-        productId: order.product._id,
-        productName: order.product.name,
-        productImage: order.product.prod_img,
-        type: order.product.type,
-        description: order.product.description,
-        productPrice: order.product.price,
-        sellerId: order.product.seller,
+    // Map through products to structure the product and seller details
+    const productDetails = order.products.map((item) => ({
+      productId: item.product._id,
+      productName: item.product.name,
+      productImage: item.product.prod_img,
+      type: item.product.type,
+      description: item.product.description,
+      productPrice: item.productPrice,
+      quantity: item.quantity,
+      seller: {
+        sellerId: item.seller._id,
+        sellerName: item.seller.userName,
+        sellerEmail: item.seller.email,
         store: {
-          storeId: order.product.store._id,
-          storeName: order.product.store.storeName,
-          storeLocation: order.product.store.storeLocation,
+          storeId: item.seller.store?._id || null,
+          storeName: item.seller.store?.storeName || null,
+          storeLocation: item.seller.store?.storeLocation || null,
         },
       },
+    }));
+
+    // Structure the full order details
+    const orderDetails = {
+      orderId: order._id,
+      products: productDetails,
       buyer: {
         customerId: order.customer._id,
         customerName: order.customer.userName,
         email: order.customer.email,
         phone: order.customer.phone,
-        address: order.customer.address,
+        address: {
+          street: order.deliveryAddress.street,
+          city: order.deliveryAddress.city,
+          postalCode: order.deliveryAddress.postalCode,
+          country: order.deliveryAddress.country,
+        },
       },
-      status: order.status,
-      quantity: order.quantity,
-      productPrice: order.productPrice,
+      status: order.orderStatus,
       deliveryCost: order.deliveryCost,
       totalAmount: order.totalAmount,
+      paymentType: order.paymentType,
+      paymentStatus: order.paymentStatus,
+      paymentId: order.paymentId || null, // Only for Stripe payments
+      deliveryTime: {
+        label: order.deliveryTime.label,
+        price: order.deliveryTime.price,
+        tag: order.deliveryTime.tag,
+      },
       orderDate: formatDate(order.createdAt),
     };
 
-    // Send the response
-    console.log(orderDetails);
-
+    // Send the response with order details
     res.status(200).json({ success: true, data: orderDetails });
   } catch (error) {
-    console.error(error);
+    console.error("Error fetching order details:", error);
     res
       .status(500)
       .json({ success: false, message: "Failed to get order details" });
   }
 };
-
-
 
 module.exports = {
   addProduct,

@@ -13,18 +13,30 @@ const stripe = require("stripe")(
   "sk_test_51PzviN1hYkTOanlJkGJbY3Ssv39dEeAwDJdaMzMtozx7LymhdFvsFmb1J0YGClqmMDBwq6ss8MD4QSw1aLCoEoR300RsoBwqQ7"
 );
 
-// Add new order
 const addOrder = async (req, res) => {
   try {
-    const { items, deliveryOption } = req.body;
+    const { items, deliveryOption, paymentMethod, deliveryAddress } = req.body;
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return res
+        .status(400)
+        .json({ success: false, message: "No items provided" });
+    }
+
+    if (!deliveryAddress || typeof deliveryAddress !== "object") {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid delivery address" });
+    }
 
     let totalAmount = 0;
     let orderItems = [];
 
+    // Calculate total amount and prepare order items
     for (let item of items) {
       const { productId, quantity } = item;
-
       const product = await Product.findById(productId);
+
       if (!product) {
         return res
           .status(404)
@@ -32,10 +44,12 @@ const addOrder = async (req, res) => {
       }
 
       if (product.quantity < quantity) {
-        return res.status(400).json({
-          success: false,
-          message: `Not enough stock for product ${productId}`,
-        });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: `Not enough stock for product ${productId}`,
+          });
       }
 
       const productPrice = product.price * quantity;
@@ -58,8 +72,8 @@ const addOrder = async (req, res) => {
     const deliveryCost = price;
     totalAmount += deliveryCost;
 
-    // Create the order
-    const order = await Order.create({
+    // Create the order in the database
+    const orderData = {
       products: orderItems,
       customer: req.user._id,
       deliveryCost,
@@ -69,66 +83,99 @@ const addOrder = async (req, res) => {
         price: deliveryCost,
         tag,
       },
-    });
+      paymentType: paymentMethod,
+      paymentId:"123456789",
+      deliveryAddress: {
+        street: deliveryAddress.street,
+        city: deliveryAddress.city,
+        postalCode: deliveryAddress.postalCode,
+        country: deliveryAddress.country,
+      },
+    };
+
+    const order = await Order.create(orderData);
 
     console.log("New order object:", order);
 
     // Clear the user's cart
     await User.findByIdAndUpdate(req.user._id, { cart: [] });
 
-    // Prepare line items for Stripe
-    const line_items = items.map((item) => {
-      if (!item.price || isNaN(item.price)) {
-        throw new Error(`Invalid price for item: ${item.name}`);
-      }
-      return {
+    if (paymentMethod === "COD") {
+      return res.json({
+        success: true,
+        message: "Order placed successfully with Cash on Delivery",
+      });
+    } else if (paymentMethod === "Stripe") {
+      // Ensure each item in the items array has a valid price
+      const line_items = items.map(async (item) => {
+        const { productId, quantity } = item;
+        const product = await Product.findById(productId);
+
+        if (!product || !product.price || isNaN(product.price)) {
+          throw new Error(`Invalid price for item: ${productId}`);
+        }
+
+        return {
+          price_data: {
+            currency: "inr",
+            product_data: {
+              name: product.name, // Ensure product name is available
+            },
+            unit_amount: Math.round(product.price * 100), // Ensure price is in correct format
+          },
+          quantity,
+        };
+      });
+
+      // Add delivery charges
+      line_items.push({
         price_data: {
           currency: "inr",
           product_data: {
-            name: item.name,
+            name: "Delivery Charges",
           },
-          unit_amount: Math.round(item.price * 100), // Ensure price is in correct format
+          unit_amount: deliveryCost * 100, // Delivery fee in the smallest currency unit
         },
-        quantity: item.quantity,
-      };
-    });
-
-    // Add delivery charges
-    line_items.push({
-      price_data: {
-        currency: "inr",
-        product_data: {
-          name: "Delivery Charges",
-        },
-        unit_amount: deliveryCost * 100, // Delivery fee in the smallest currency unit
-      },
-      quantity: 1,
-    });
-
-    // Ensure total amount is above minimum threshold (₹37.00)
-    const totalStripeAmount = line_items.reduce(
-      (total, item) => total + item.price_data.unit_amount * item.quantity,
-      0
-    );
-    if (totalStripeAmount < 3700) {
-      // Minimum amount of ₹37.00
-      return res.status(400).json({
-        success: false,
-        message: "Total amount is too low. Minimum amount is ₹37.00",
+        quantity: 1,
       });
+
+      // Wait for all line items to be prepared
+      const preparedLineItems = await Promise.all(line_items);
+
+      // Ensure total amount is above minimum threshold (₹37.00)
+      const totalStripeAmount = preparedLineItems.reduce(
+        (total, item) => total + item.price_data.unit_amount * item.quantity,
+        0
+      );
+      if (totalStripeAmount < 3700) {
+        return res.status(400).json({
+          success: false,
+          message: "Total amount is too low. Minimum amount is ₹37.00",
+        });
+      }
+
+      // Create Stripe checkout session
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        line_items: preparedLineItems,
+        mode: "payment",
+        success_url: `http://localhost:5000/api/order/verify?session_id={CHECKOUT_SESSION_ID}&orderId=${order._id}`,
+        cancel_url: `http://localhost:5000/api/order/verify?session_id={CHECKOUT_SESSION_ID}&orderId=${order._id}`,
+      });
+
+      // Update the order with the payment ID and status
+      await Order.findByIdAndUpdate(order._id, {
+        paymentId: session.id,
+        paymentStatus: "pending", // Set to "pending" initially
+      });
+
+      // Respond with the session URL
+      return res.json({ success: true, session_url: session.url });
+    } else {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid payment method" });
     }
-
-    // Create Stripe checkout session
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      line_items,
-      mode: "payment",
-      success_url: `http://localhost:5000/verify?success=true&orderId=${order._id}`,
-      cancel_url: `http://localhost:5000/verify?success=false&orderId=${order._id}`,
-    });
-
-    // Respond with the session URL
-    res.json({ success: true, session_url: session.url });
   } catch (error) {
     console.error("Error adding order:", error);
     res.status(500).json({
@@ -136,6 +183,35 @@ const addOrder = async (req, res) => {
       message: "Failed to add order",
       error: error.message,
     });
+  }
+};
+
+const verifyPayment=async (req, res) => {
+  const { session_id, orderId } = req.query;
+
+  try {
+    // Retrieve the Stripe session
+    const session = await stripe.checkout.sessions.retrieve(session_id);
+
+    // Retrieve the payment intent
+    const paymentIntent = await stripe.paymentIntents.retrieve(session.payment_intent);
+
+    // Check the payment status
+    if (paymentIntent.status === 'succeeded') {
+      // Update the order with the payment details
+      await Order.findByIdAndUpdate(orderId, {
+        paymentId: paymentIntent.id,
+        paymentStatus: 'paid',
+      });
+
+      // Redirect to a success page
+      res.redirect('http://localhost:3000/order-success');
+    } else {
+      res.redirect('http://localhost:3000/order-failed');
+    }
+  } catch (error) {
+    console.error("Error verifying payment:", error);
+    res.redirect('/order-failed');
   }
 };
 
@@ -201,43 +277,54 @@ const getOrder = async (req, res) => {
       return `${month} ${day}, ${year}`;
     };
 
-    const orders = await Order.find({ customer: req.user._id }).populate(
-      "product"
-    );
+    // Fetch orders for the authenticated user and populate product and store details
+    const orders = await Order.find({ customer: req.user._id })
+      .populate({
+        path: "products.product",
+        populate: {
+          path: "store",
+          select: "storeName storeLocation",
+        },
+      })
+      .populate("customer"); // Populate customer details if needed
 
     const orderData = orders.map((order) => ({
       orderId: order._id,
-      product: {
-        productId: order.product._id,
-        productName: order.product.name,
-        productImage: order.product.prod_img,
-        type: order.product.type,
-        description: order.product.description,
-        productPrice: order.product.price,
-        sellerId: order.product.seller,
+      products: order.products.map((productItem) => ({
+        productId: productItem.product._id,
+        productName: productItem.product.name,
+        productImage: productItem.product.prod_img,
+        description: productItem.product.description,
+        productPrice: productItem.product.price,
+        quantity: productItem.product.quantity,
+        sellerId: productItem.product.seller,
         store: {
-          storeId: order.product.store._id,
-          storeName: order.product.store.storeName,
-          storeLocation: order.product.store.storeLocation,
+          storeId: productItem.product.store._id,
+          storeName: productItem.product.store.storeName,
+          storeLocation: productItem.product.store.storeLocation,
         },
-      },
+      })),
       buyer: {
         customerId: order.customer._id,
         customerName: order.customer.userName,
         email: order.customer.email,
         phone: order.customer.phone,
-        address: order.customer.address,
       },
       status: order.status,
-      quantity: order.quantity,
+      quantity: order.products.reduce((acc, item) => acc + item.quantity, 0), // Assuming you want the total quantity of products
       totalAmount: order.totalAmount,
+      deliveryCost: order.deliveryCost,
+      deliveryAddress: order.deliveryAddress,
+      deliveryTime: order.deliveryTime.label,
       orderDate: formatDate(order.createdAt),
     }));
 
     res.status(200).json(orderData);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("Error fetching orders:", error.message, error.stack);
+    res
+      .status(500)
+      .json({ error: "Internal server error", details: error.message });
   }
 };
 
@@ -289,6 +376,7 @@ const updateOrderStatus = async (req, res) => {
 
 module.exports = {
   addOrder,
+  verifyPayment,
   cancelOrder,
   cancelOrderSeller,
   getOrder,

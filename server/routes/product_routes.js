@@ -53,5 +53,4 @@ router
 
 router.route("/orders/summary/:orderId").get(getOrderDetails);
 
-
 module.exports = router;

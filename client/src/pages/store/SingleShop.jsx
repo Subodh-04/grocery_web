@@ -86,6 +86,17 @@ const SingleShop = () => {
     fetchStore();
   }, [id]);
 
+  
+  const [viewMode, setViewMode] = useState("grid");
+  const handleViewChange = (view) => {
+    setViewMode(view);
+  };
+  const productClasses = {
+    list: "row row-cols-1 gap-2",
+    grid: "row row-cols-2 row-cols-md-2",
+    gridgap: "row row-cols-4 row-cols-md-4",
+  };
+
   // Handle sorting products
   const handleSortChange = (e) => {
     const sortingCriteria = e.target.value;
@@ -104,7 +115,7 @@ const SingleShop = () => {
   const handleaddtocart = async (productId) => {
     try {
       console.log(productId);
-      
+
       const userData = JSON.parse(localStorage.getItem("userData"));
       const response = await axios.post(
         "http://localhost:5000/api/order/cart/add",
@@ -330,6 +341,32 @@ const SingleShop = () => {
                           </p>
                         </div>
                         <div className="d-flex justify-content-md-between align-items-center">
+                          <button
+                            className={`text-muted me-3 border-0 bg-transparent ${
+                              viewMode === "list" ? "active" : ""
+                            }`}
+                            onClick={() => handleViewChange("list")}
+                          >
+                            <i className="bi bi-list-ul" />
+                          </button>
+
+                          <button
+                            className={`me-3 border-0 bg-transparent ${
+                              viewMode === "grid" ? "active" : ""
+                            }`}
+                            onClick={() => handleViewChange("grid")}
+                          >
+                            <i className="bi bi-grid" />
+                          </button>
+
+                          <button
+                            className={`me-3 text-muted border-0 bg-transparent ${
+                              viewMode === "gridgap" ? "active" : ""
+                            } d-none d-md-block`}
+                            onClick={() => handleViewChange("gridgap")}
+                          >
+                            <i className="bi bi-grid-3x3-gap" />
+                          </button>
                           <div>
                             {/* select option */}
                             <select
@@ -349,7 +386,7 @@ const SingleShop = () => {
                         </div>
                       </div>
                       {/* row */}
-                      <div className="row g-4 row-cols-xl-4 row-cols-lg-3 row-cols-2 row-cols-md-2 mt-2">
+                      <div className={productClasses[viewMode]}>
                         {currentProducts.map((product, index) => (
                           <div className="col" key={index}>
                             <div className="card card-product">
@@ -435,7 +472,9 @@ const SingleShop = () => {
                                   <div>
                                     <button
                                       className="btn btn-primary btn-sm"
-                                      onClick={() => handleaddtocart(product._id)}
+                                      onClick={() =>
+                                        handleaddtocart(product._id)
+                                      }
                                     >
                                       <i className="feather feather-plus"></i>{" "}
                                       Add

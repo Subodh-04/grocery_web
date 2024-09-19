@@ -18,8 +18,6 @@ import BlogCategory from "./pages/About/BlogCategory";
 import Contact from "./pages/About/Contact";
 // Shop pages
 import Shop from "./pages/Shop/Shop";
-import ShopGridCol3 from "./pages/Shop/ShopGridCol3";
-import ShopListCol from "./pages/Shop/ShopListCol";
 import ShopCart from "./pages/Shop/ShopCart";
 import ShopCheckOut from "./pages/Shop/ShopCheckOut";
 import ShopWishList from "./pages/Shop/ShopWishList";
@@ -40,6 +38,9 @@ import AdminPanel from "./pages/Admin/AdminPanel";
 import MyAccountPasswordReset from "./pages/Accounts/MyAccountPasswordReset";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import OrderSuccess from "./pages/PaymentPage/orderSuccess";
+import OrderFailed from "./pages/PaymentPage/orderFailed";
+import OrderDetails from "./pages/Accounts/MyAccountOrderDetails";
 
 const AppContent = () => {
   const location = useLocation();
@@ -48,7 +49,9 @@ const AppContent = () => {
   const hideHeaderAndFooter =
     location.pathname === "/seller-panel" ||
     location.pathname.startsWith("/reset-password") ||
-    location.pathname === "/admin-panel";
+    location.pathname === "/admin-panel" ||
+    location.pathname === "/order-failed" ||
+    location.pathname === "/order-success";
 
   return (
     <div>
@@ -59,9 +62,6 @@ const AppContent = () => {
         <Route path="/Grocery-react/" element={<Home />} />
         {/* Shop pages */}
         <Route path="/Shop/:department" element={<Shop />} />
-        <Route path="/ShopGridCol3" element={<ShopGridCol3 />} />
-        <Route path="/ShopListCol" element={<ShopListCol />} />
-        <Route path="/ShopWishList" element={<ShopWishList />} />
         <Route path="/ShopCheckOut" element={<ShopCheckOut />} />
         <Route path="/ShopCart" element={<ShopCart />} />
         {/* Store pages */}
@@ -69,6 +69,7 @@ const AppContent = () => {
         <Route path="/Single-Store/:id" element={<SingleShop />} />
         {/* Accounts pages */}
         <Route path="/MyAccountOrder" element={<MyAccountOrder />} />
+        <Route path="/order-details/:orderId" element={<OrderDetails />} />
         <Route path="/MyAccountSetting" element={<MyAccountSetting />} />
         <Route
           path="/MyAccountNotification"
@@ -99,6 +100,9 @@ const AppContent = () => {
         <Route path="/seller-panel" element={<SellerPanel />} />
         {/* Admin panel */}
         <Route path="/admin-panel" element={<AdminPanel />} />
+        {/*Payment sucess and failure pages */}
+        <Route path="/order-success" element={<OrderSuccess />} />
+        <Route path="/order-failed" element={<OrderFailed />} />
       </Routes>
 
       {/* Conditionally render Footer */}
