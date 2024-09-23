@@ -2,11 +2,15 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { MagnifyingGlass } from "react-loader-spinner";
 import ScrollToTop from "../ScrollToTop";
-import axios from "axios";
 import { toast } from "react-toastify";
+import {
+  addAddress,
+  deleteAddress,
+  fetchAddresses,
+  updateAddress,
+} from "../../api";
 
 const MyAccountAddress = () => {
-  // loading
   const [loaderStatus, setLoaderStatus] = useState(true);
   const [address, setAddress] = useState([]);
   const [editmode, setEditmode] = useState(false);
@@ -43,31 +47,22 @@ const MyAccountAddress = () => {
   };
 
   const handleAddAddress = async () => {
+    setEditmode(false);
     try {
-      const street = formdata.address1 + " | " + formdata.address2;
-      const name = formdata.firstname + " " + formdata.lastname;
-      const userData = JSON.parse(localStorage.getItem("userData"));
-      const res = await axios.post(
-        "http://localhost:5000/api/auth/user/addAddress",
-        {
-          name: name,
-          street: street,
-          city: formdata.city,
-          state: formdata.state,
-          country: formdata.country,
-          zip: formdata.zip,
-          isdefault: formdata.isdefault,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${userData.token}`,
-          },
-        }
-      );
-      if (!res) {
-        console.log("res:", res.data);
-      }
-      console.log("data:", res.data);
+      const street = `${formdata.address1} | ${formdata.address2}`;
+      const name = `${formdata.firstname} ${formdata.lastname}`;
+      const addressData = {
+        name,
+        street,
+        city: formdata.city,
+        state: formdata.state,
+        country: formdata.country,
+        zip: formdata.zip,
+        isdefault: formdata.isdefault,
+      };
+      const res = await addAddress(addressData);
+      toast.success(res.message);
+
       setFormdata({
         firstname: "",
         lastname: "",
@@ -79,91 +74,63 @@ const MyAccountAddress = () => {
         zip: "",
         isdefault: false,
       });
-      toast.success(res.data.message);
     } catch (error) {
-      console.log("error", error);
+      console.error("Error adding address:", error);
     }
   };
 
   const handleDeleteAddress = async (addressId) => {
-    const userData = JSON.parse(localStorage.getItem("userData"));
-    const res = await axios.delete(
-      `http://localhost:5000/api/auth/user/delete/${addressId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${userData.token}`,
-        },
-      }
-    );
-    if (!res) {
-      toast.error(res.data.message);
-      console.log(res.data);
+    try {
+      const res = await deleteAddress(addressId);
+      toast.success(res.message);
+    } catch (error) {
+      console.error("Error deleting address:", error);
     }
-    toast.success(res.data.message);
-    console.log(res.data);
   };
 
   const handleEditAddress = async (addressId) => {
     try {
       setEditmode(true);
-      const add = address.find(
-        (addr) => addr._id.toString() === addressId.toString()
-      );
-      console.log(add);
-      const [firstname, lastname] = add.name.split(" ");
-      const [address1, address2] = add.street.split(" | ");
+      const add = address.find((addr) => addr._id === addressId);
+
+      if (!add) {
+        console.error("Address not found for the given ID:", addressId);
+        toast.error("Address not found.");
+        return;
+      }
+
+      const [firstname, lastname] = (add.name || "").split(" ");
+      const [address1, address2] = (add.street || "").split(" | ");
+
       setFormdata({
-        firstname: firstname,
-        lastname: lastname,
-        address1: address1,
-        address2: address2,
-        city: add.city,
-        state: add.state,
-        zip: add.zip,
-        country: add.country,
-        isdefault: add.isdefault,
+        firstname: firstname || "",
+        lastname: lastname || "",
+        address1: address1 || "",
+        address2: address2 || "",
+        city: add.city || "",
+        state: add.state || "",
+        zip: add.zip || "",
+        country: add.country || "",
+        isdefault: add.isdefault || false,
       });
-      // const userData = JSON.parse(localStorage.getItem("userData"));
-      // const res = await axios.put(
-      //   `http://localhost:5000/api/auth/user/update/${addressId}`,
-      //   { formdata },
-      //   {
-      //     headers: {
-      //       Authorization: `Bearer ${userData.token}`,
-      //     },
-      //   }
-      // );
-      // if (!res) {
-      //   console.log(res.data);
-      // }
-      // alert(res.data.message);
-      // console.log(res.data);
-      // setEditmode(false);
     } catch (error) {
-      console.log("error:", error);
+      console.log("Error updating address:", error);
     }
   };
 
   useEffect(() => {
     const getAddress = async () => {
       const userData = JSON.parse(localStorage.getItem("userData"));
-      const res = await axios.get(
-        `http://localhost:5000/api/auth/user/${userData.userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${userData.token}`,
-          },
-        }
-      );
-      if (!res) {
-        toast.error(res.data.message);
-        console.log(res.data);
+      try {
+        const addressList = await fetchAddresses(userData.userId);
+        setAddress(addressList);
+      } catch (error) {
+        console.error(error);
       }
-      setAddress(res.data.address);
     };
+
     getAddress();
   }, [address]);
-
   return (
     <div>
       <>
@@ -225,13 +192,6 @@ const MyAccountAddress = () => {
                         >
                           <i className="fas fa-map-marker-alt me-2" />
                           Address
-                        </Link>
-                      </li>
-                      {/* nav item */}
-                      <li className="nav-item">
-                        <Link className="nav-link" to="/MyAccountPaymentMethod">
-                          <i className="fas fa-credit-card me-2" />
-                          Payment Method
                         </Link>
                       </li>
                       {/* nav item */}
@@ -321,9 +281,9 @@ const MyAccountAddress = () => {
                                       data-bs-toggle="modal"
                                       data-bs-target="#addAddressModal"
                                       className="text-inherit border-0 bg-transparent"
-                                      onClick={() => {
-                                        handleEditAddress(address._id);
-                                      }}
+                                      onClick={() =>
+                                        handleEditAddress(address._id)
+                                      }
                                     >
                                       Edit
                                     </button>
@@ -585,7 +545,9 @@ const MyAccountAddress = () => {
                           className="btn btn-primary"
                           type="button"
                           data-bs-dismiss="modal"
-                          onClick={handleEditAddress}
+                          onClick={() => {
+                            handleEditAddress(address._id);
+                          }}
                         >
                           Edit Address
                         </button>

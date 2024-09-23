@@ -14,9 +14,9 @@ const MyAcconutNotification = () => {
 
   return (
     <div>
-       <>
-            <ScrollToTop/>
-            </>
+      <>
+        <ScrollToTop />
+      </>
       <>
         {/* section */}
         <section>
@@ -70,13 +70,6 @@ const MyAcconutNotification = () => {
                       <Link className="nav-link " to="/MyAccountAddress">
                         <i className="fas fa-map-marker-alt me-2" />
                         Address
-                      </Link>
-                    </li>
-                    {/* nav item */}
-                    <li className="nav-item">
-                      <Link className="nav-link " to="/MyAccountPaymentMethod">
-                        <i className="fas fa-credit-card me-2" />
-                        Payment Method
                       </Link>
                     </li>
                     {/* nav item */}

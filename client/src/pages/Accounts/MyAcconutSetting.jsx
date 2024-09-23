@@ -2,13 +2,13 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { MagnifyingGlass } from "react-loader-spinner";
 import ScrollToTop from "../ScrollToTop";
-import axios from "axios";
 import { toast } from "react-toastify";
+import { deleteAccount, fetchUserDetails, requestPasswordReset, updatePassword, updateUserProfile } from "../../api";
 
 const MyAccountSetting = () => {
   const [loaderStatus, setLoaderStatus] = useState(true);
   const [userDetails, setUserDetails] = useState({
-    userName: "",
+    username: "",
     email: "",
     phone: "",
     currentPassword: "",
@@ -18,33 +18,30 @@ const MyAccountSetting = () => {
   const navigate = useNavigate("");
 
   useEffect(() => {
-    setTimeout(() => {
-      setLoaderStatus(false);
-    }, 1500);
-
     const userData = JSON.parse(localStorage.getItem("userData"));
     if (userData && userData.userId) {
-      axios
-        .get(`http://localhost:5000/api/auth/user/${userData.userId}`, {
-          headers: { Authorization: `Bearer ${userData.token}` },
-        })
-        .then((response) => {
-          setUserDetails((prevDetails) => ({
+      fetchUserDetails(userData.userId, userData.token)
+        .then(data => {
+          setUserDetails(prevDetails => ({
             ...prevDetails,
-            name: response.data.username || "",
-            email: response.data.email || "",
-            phone: response.data.phone || "",
+            username: data.username || "",
+            email: data.email || "",
+            phone: data.phone || "",
           }));
         })
-        .catch((error) => {
+        .catch(error => {
           console.error("Error fetching user details:", error);
         });
     }
+
+    setTimeout(() => {
+      setLoaderStatus(false);
+    }, 1500);
   }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setUserDetails((prevDetails) => ({
+    setUserDetails(prevDetails => ({
       ...prevDetails,
       [name]: value,
     }));
@@ -53,64 +50,24 @@ const MyAccountSetting = () => {
   const handleSaveDetails = async () => {
     try {
       const userData = JSON.parse(localStorage.getItem("userData"));
-      const response = await axios.put(
-        "http://localhost:5000/api/auth/user/profile",
-        {
-          userName: userDetails.name,
-          email: userDetails.email,
-          phone: userDetails.phone,
-        },
-        {
-          headers: { Authorization: `Bearer ${userData.token}` },
-        }
-      );
+      const updatedData = await updateUserProfile({
+        username: userDetails.username,
+        email: userDetails.email,
+        phone: userDetails.phone,
+      }, userData.token);
 
-      localStorage.setItem(
-        "userData",
-        JSON.stringify({ ...userData, ...response.data })
-      );
+      localStorage.setItem("userData", JSON.stringify({ ...userData, ...updatedData }));
       toast.success("Details updated successfully!");
     } catch (error) {
       console.error("Error updating details:", error);
     }
   };
-  const [loggeduser, setLoggedUser] = useState([]);
-  useEffect(() => {
-    const loggeduserDetails = async () => {
-      try {
-        const userData = JSON.parse(localStorage.getItem("userData"));
-        const user = await axios.get(
-          `http://localhost:5000/api/auth/user/${userData.userId}`
-        );
-        if (!user) {
-          console.log("User not found");
-        }
-        setLoggedUser(user.data);
-      } catch (error) {
-        console.log("Error :", error);
-      }
-    };
-    loggeduserDetails();
-  }, []);
 
   const handlePasswordResetRequest = async () => {
     try {
-      const emails = loggeduser.email;
-      console.log(emails);
-
       const userData = JSON.parse(localStorage.getItem("userData"));
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/user/resetpass",
-        { email: emails },
-        {
-          headers: {
-            Authorization: `Bearer ${userData.token}`,
-          },
-        }
-      );
-      console.log("password request:", response.data);
-
-      toast.info(response.data.message);
+      const response = await requestPasswordReset(userDetails.email, userData.token);
+      toast.info(response.message);
     } catch (error) {
       console.error("Error requesting password reset:", error);
     }
@@ -119,41 +76,28 @@ const MyAccountSetting = () => {
   const handlePasswordUpdate = async () => {
     try {
       const userData = JSON.parse(localStorage.getItem("userData"));
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/user/updatepass/",
-        {
-          userId: userData.userId,
-          currentPassword: userDetails.currentPassword,
-          newPassword: userDetails.newPassword,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${userData.token}`,
-          },
-        }
+      const response = await updatePassword(
+        userData.userId,
+        userDetails.currentPassword,
+        userDetails.newPassword,
+        userData.token
       );
-      if (!response) {
-        toast.error(response.data.message);
-        console.log(response.data.message);
-      }
-      toast.success(response.data.message);
-      setUserDetails({
-        ...userDetails,
+
+      toast.success(response.message);
+      setUserDetails(prevDetails => ({
+        ...prevDetails,
         currentPassword: "",
         newPassword: "",
-      });
-      console.log("password updated successfully");
+      }));
     } catch (error) {
-      console.log("Error while updating Password:", error);
+      console.error("Error while updating Password:", error);
     }
   };
 
   const handleDeleteAccount = async () => {
     try {
       const userData = JSON.parse(localStorage.getItem("userData"));
-      await axios.delete(`/api/deleteAccount/${userData.userId}`, {
-        headers: { Authorization: `Bearer ${userData.token}` },
-      });
+      await deleteAccount(userData.userId, userData.token);
       localStorage.removeItem("userData");
       toast.info("Account deleted successfully!");
       window.location.href = "/"; // Redirect to home or login page
@@ -214,12 +158,6 @@ const MyAccountSetting = () => {
                     </Link>
                   </li>
                   <li className="nav-item">
-                    <Link className="nav-link" to="/MyAccountPaymentMethod">
-                      <i className="fas fa-credit-card me-2" />
-                      Payment Method
-                    </Link>
-                  </li>
-                  <li className="nav-item">
                     <Link className="nav-link" to="/MyAccountNotification">
                       <i className="fas fa-bell me-2" />
                       Notification
@@ -270,8 +208,8 @@ const MyAccountSetting = () => {
                             <input
                               type="text"
                               className="form-control"
-                              name="name"
-                              value={userDetails.name}
+                              name="username"
+                              value={userDetails.username}
                               onChange={handleInputChange}
                             />
                           </div>

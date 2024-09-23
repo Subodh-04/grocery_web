@@ -2,25 +2,20 @@ import React, { useState } from "react";
 import forgetpassword from "../../images/fp-g.svg";
 import { Link } from "react-router-dom";
 import ScrollToTop from "../ScrollToTop";
-import axios from "axios";
-import { toast } from "react-toastify";
+import { handleForgotPassword } from "../../api";
 
 const MyAccountForgetPassword = () => {
   const [email, setEmail] = useState("");
-  const handleForgotPassword=async(e)=>{
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response=await axios.post("http://localhost:5000/api/auth/user/resetpass",{email});
-      
-      if(!response){
-        toast.error(response.data.message);
-      }
-      toast.info(response.data.message);
-      console.log("Password Change Mail Send to the User");
+      await handleForgotPassword(email);
     } catch (error) {
-      console.log("Error While forget Password:",error);
+      console.error("Error in forgot password:", error);
     }
   }
+  
   return (
     <div>
        <>
@@ -53,7 +48,7 @@ const MyAccountForgetPassword = () => {
                     </p>
                   </div>
                   {/* form */}
-                  <form onSubmit={handleForgotPassword}>
+                  <form onSubmit={handleSubmit}>
                     {/* row */}
                     <div className="row g-3">
                       {/* col */}

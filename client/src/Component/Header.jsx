@@ -55,15 +55,7 @@ const Header = () => {
               alt="eCommerce HTML Template"
             />
           </Link>
-          <input
-            className="form-control responsivesearch me-4"
-            list="datalistOptions"
-            id="exampleDataList"
-            placeholder="Type to search..."
-            fdprocessedid="9icrif"
-            style={{ width: "35%" }}
-          />
-
+          
           <button
             className="navbar-toggler"
             type="button"

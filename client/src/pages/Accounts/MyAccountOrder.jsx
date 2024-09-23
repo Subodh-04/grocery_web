@@ -3,34 +3,26 @@ import { Link } from "react-router-dom";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import { MagnifyingGlass } from "react-loader-spinner";
 import ScrollToTop from "../ScrollToTop";
-import axios from "axios";
-import { IoMdDownload } from "react-icons/io";
+import { fetchOrders } from "../../api";
 
 const MyAccountOrder = () => {
   const [loaderStatus, setLoaderStatus] = useState(true);
   const [orders, setOrders] = useState([]);
 
   useEffect(() => {
-    const fetchOrders = async () => {
+    const loadOrders = async () => {
       try {
-        const userData = JSON.parse(localStorage.getItem("userData"));
-        const response = await axios.get("http://localhost:5000/api/order/", {
-          headers: {
-            Authorization: `Bearer ${userData.token}`,
-          },
-        });
-        console.log(response.data);
-        
-        setLoaderStatus(false);
-        setOrders(response.data || []);
-      } catch (error) {
-        console.log("Error Fetching Orders:", error);
+        const ordersData = await fetchOrders();
+        setOrders(ordersData);
+      } catch (err) {
+        console.error("Error Fetching Orders:", err);
+      } finally {
         setLoaderStatus(false);
       }
     };
-    fetchOrders();
-  }, []);
 
+    loadOrders();
+  }, []);
   return (
     <div>
       <ScrollToTop />
@@ -102,7 +94,9 @@ const MyAccountOrder = () => {
                           {orders.map((order, index) => (
                             <tr key={index} className="border-top border-light">
                               <td className="py-4">{order.orderId}</td>
-                              <td className="py-4">{order.totalAmount}&#8377;</td>
+                              <td className="py-4">
+                                {order.totalAmount}&#8377;
+                              </td>
                               <td>
                                 <Link
                                   to={`/order-details/${order.orderId}`}

@@ -20,8 +20,6 @@ import grocerybanner from "../images/grocery-banner.png";
 import grocerybanner2 from "../images/grocery-banner-2.jpg";
 import map from "../images/map.png";
 import iphone from "../images/iphone-2.png";
-import googleplay from "../images/googleplay-btn.svg";
-import appstore from "../images/appstore-btn.svg";
 import bannerdeal from "../images/banner-deal1.jpg";
 import product11 from "../images/product-img-11.jpg";
 import product12 from "../images/product-img-12.jpg";
@@ -53,10 +51,10 @@ import { MagnifyingGlass } from "react-loader-spinner";
 const Home = () => {
   const [isVisible, setIsVisible] = useState(false);
 
-  const handleRole=(selected)=>{
+  const handleRole = (selected) => {
     localStorage.setItem("role", selected);
-  }
-  const userRole=localStorage.getItem("role");
+  };
+  const userRole = localStorage.getItem("role");
 
   const toggleVisibility = () => {
     if (window.pageYOffset > 300) {
@@ -502,7 +500,7 @@ const Home = () => {
                         <Zoom>
                           <div className="text-center mb-10">
                             {/* img */}
-                            <Link to="#">
+                            <Link to="/Shop/Dairy">
                               <img
                                 src={dairybreadeggs}
                                 alt="dairy-bread-eggs"
@@ -513,7 +511,7 @@ const Home = () => {
                             <div className="mt-4">
                               <h5 className="fs-6 mb-0">
                                 {" "}
-                                <Link to="#" className="text-inherit">
+                                <Link to="/Shop/Dairy" className="text-inherit">
                                   Dairy, Bread &amp; Eggs
                                 </Link>
                               </h5>
@@ -526,7 +524,7 @@ const Home = () => {
                         <Zoom>
                           <div className="text-center mb-10">
                             {/* img */}
-                            <Link to="#">
+                            <Link to="/Shop/Vegetables">
                               <img
                                 src={fruitsvegetables}
                                 alt="fruits-vegetables"
@@ -537,7 +535,7 @@ const Home = () => {
                               {/* text */}
                               <h5 className="fs-6 mb-0">
                                 {" "}
-                                <Link to="#" className="text-inherit">
+                                <Link to="/Shop/Vegetables" className="text-inherit">
                                   Fruits &amp; Vegetables
                                 </Link>
                               </h5>
@@ -550,7 +548,7 @@ const Home = () => {
                         <Zoom>
                           <div className="text-center mb-10">
                             {/* img */}
-                            <Link to="#">
+                            <Link to="/Shop/Snacks">
                               <img
                                 src={snackmunchies}
                                 alt="snack-munchies"
@@ -561,7 +559,7 @@ const Home = () => {
                             <div className="mt-4">
                               <h5 className="fs-6 mb-0">
                                 {" "}
-                                <Link to="#" className="text-inherit">
+                                <Link to="/Shop/Snacks" className="text-inherit">
                                   Snack &amp; Munchies
                                 </Link>
                               </h5>
@@ -574,7 +572,7 @@ const Home = () => {
                         <Zoom>
                           <div className="text-center mb-10">
                             {/* img */}
-                            <Link to="#">
+                            <Link to="/Shop/Bakery">
                               <img
                                 src={bakerybiscuits}
                                 alt="bakery-biscuits"
@@ -585,7 +583,7 @@ const Home = () => {
                             <div className="mt-4">
                               <h5 className="fs-6 mb-0">
                                 {" "}
-                                <Link to="#" className="text-inherit">
+                                <Link to="/Shop/Bakery" className="text-inherit">
                                   Bakery &amp; Biscuits
                                 </Link>
                               </h5>
@@ -598,10 +596,10 @@ const Home = () => {
                         <Zoom>
                           <div className="text-center mb-10">
                             {/* img */}
-                            <Link to="#">
+                            <Link to="/Shop/Household Items">
                               <img
                                 src={instantfood}
-                                alt="instant-food"
+                                alt="household-items"
                                 className="card-image rounded-circle"
                               />
                             </Link>
@@ -609,8 +607,8 @@ const Home = () => {
                             <div className="mt-4">
                               <h5 className="fs-6 mb-0">
                                 {" "}
-                                <Link to="#" className="text-inherit">
-                                  Instant Food
+                                <Link to="/Shop/Household Items" className="text-inherit">
+                                  Household Items
                                 </Link>
                               </h5>
                             </div>
@@ -622,7 +620,7 @@ const Home = () => {
                         <Zoom>
                           <div className="text-center mb-10">
                             {/* img */}
-                            <Link to="#">
+                            <Link to="/Shop/Grocery">
                               <img
                                 src={teacoffeedrinks}
                                 alt="tea-coffee-drinks"
@@ -632,7 +630,7 @@ const Home = () => {
                             {/* text */}
                             <div className="mt-4">
                               <h5 className="fs-6 mb-0">
-                                <Link to="#" className="text-inherit">
+                                <Link to="/Shop/Grocery" className="text-inherit">
                                   Tea, Coffee &amp; Drinks
                                 </Link>
                               </h5>
@@ -645,7 +643,7 @@ const Home = () => {
                         <Zoom>
                           <div className="text-center mb-10">
                             {/* img */}
-                            <Link to="#">
+                            <Link to="/Shop/Drinks">
                               <img
                                 src={colddrinksjuices}
                                 alt="cold-drinks-juices"
@@ -655,7 +653,7 @@ const Home = () => {
                             {/* text */}
                             <div className="mt-4">
                               <h5 className="fs-6 mb-0">
-                                <Link to="#" className="text-inherit">
+                                <Link to="/Shop/Drinks" className="text-inherit">
                                   Cold Drinks &amp; Juices
                                 </Link>
                               </h5>
@@ -668,7 +666,7 @@ const Home = () => {
                         <Zoom>
                           <div className="text-center mb-10">
                             {/* img */}
-                            <Link to="#">
+                            <Link to="/Shop/Non-Veg">
                               <img
                                 src={chickenmeatfish}
                                 alt="chicken-meat-fish"
@@ -678,7 +676,7 @@ const Home = () => {
                             {/* text */}
                             <div className="mt-4">
                               <h5 className="fs-6 mb-0">
-                                <Link to="#" className="text-inherit">
+                                <Link to="/Shop/Non-Veg" className="text-inherit">
                                   Chicken, Meat &amp; Fish
                                 </Link>
                               </h5>
@@ -908,11 +906,10 @@ const Home = () => {
                           </button>
                           <button
                             className="btn btn-secondary w-100 mt-2"
-                            onClick={() =>{
-                              (window.location.href = "/MyAccountSignUp")
-                              handleRole("customer")
-                            }
-                            }
+                            onClick={() => {
+                              window.location.href = "/MyAccountSignUp";
+                              handleRole("customer");
+                            }}
                           >
                             Sign Up as Customer
                           </button>
@@ -934,11 +931,10 @@ const Home = () => {
                           </button>
                           <button
                             className="btn btn-secondary w-100 mt-2"
-                            onClick={() =>{
-                              (window.location.href = "/MyAccountSignUp")
-                              handleRole("seller")
-                            }
-                            }
+                            onClick={() => {
+                              window.location.href = "/MyAccountSignUp";
+                              handleRole("seller");
+                            }}
                           >
                             Sign Up as Seller
                           </button>

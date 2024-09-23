@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import signupimage from "../../images/signup-g.svg";
 import { Link, useNavigate } from "react-router-dom";
 import ScrollToTop from "../ScrollToTop";
-import axios from "axios";
 import { toast } from "react-toastify";
+import { registerUser } from "../../api";
 
 const MyAccountSignUp = () => {
   const [formData, setFormData] = useState({
@@ -23,26 +23,25 @@ const MyAccountSignUp = () => {
     });
   };
 
-  const SubmitData = async (e) => {
+  const submitData = async (e) => {
     e.preventDefault();
 
     try {
       const { firstName, lastName, email, phone, password } = formData;
-
       const role = localStorage.getItem("role");
       const userName = `${firstName} ${lastName}`;
 
-      const response = await axios.post("http://localhost:5000/api/auth/", {
+      const response = await registerUser({
         userName,
         email,
         phone,
         password,
-        role: role,
+        role,
       });
 
       if (response) {
-        console.log("user details ", response.data);
-        toast.success(response.data.message);
+        console.log("user details ", response);
+        toast.success(response.message);
 
         setTimeout(() => {
           localStorage.removeItem("role");
@@ -51,7 +50,6 @@ const MyAccountSignUp = () => {
       }
     } catch (error) {
       console.log("Registration error:", error);
-      toast.error(error.response.data.extraDetails);
     }
   };
 
@@ -69,7 +67,7 @@ const MyAccountSignUp = () => {
                 <h1 className="mb-1 h2 fw-bold">Get Start Shopping</h1>
                 <p>Welcome to FreshFinds! Enter your email to get started.</p>
               </div>
-              <form onSubmit={SubmitData}>
+              <form onSubmit={submitData}>
                 <div className="row g-3">
                   <div className="col">
                     <input

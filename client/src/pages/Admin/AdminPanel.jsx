@@ -4,7 +4,6 @@ import { AiOutlineLogout } from "react-icons/ai";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import "../../App.css";
 import { MagnifyingGlass } from "react-loader-spinner";
 import {
   BsFillBellFill,
@@ -477,50 +476,81 @@ export default function AdminPanel() {
                   </div>
                 </section>
               )}
-
+ 
               {activeSection === "sales" && (
-                <section>
-                  <h3>Sales Reports</h3>
-                  <main className="main-container">
-                    <div className="main-title">
-                      <h3>DASHBOARD</h3>
-                    </div>
+                <section className="container my-4">
+                  <h3 className="mb-4 text-primary">Sales Reports</h3>
+                  <div className="mb-4">
+                    <h3 className="text-secondary">DASHBOARD</h3>
+                  </div>
 
-                    <div className="main-cards ">
-                      <div className="card custom-card">
-                        <div className="card-inner">
-                          <h3>PRODUCTS</h3>
-                          <BsFillArchiveFill className="card_icon" />
+                  <div className="row">
+                    <div className="col-md-3 mb-4">
+                      <div className="card custom-card shadow-sm">
+                        <div className="card-body d-flex align-items-center">
+                          <div className="card-icon bg-primary text-white rounded-circle p-3">
+                            <BsFillArchiveFill />
+                          </div>
+                          <div className="ms-3">
+                            <h5 className="card-title">PRODUCTS</h5>
+                            <h1 className="card-footer text-primary">
+                              {salesData.productsCount}
+                            </h1>
+                          </div>
                         </div>
-                        <h1>{salesData.productsCount}</h1>
-                      </div>
-
-                      <div className="card custom-card">
-                        <div className="card-inner">
-                          <h3>CATEGORIES</h3>
-                          <BsFillGrid3X3GapFill className="card_icon" />
-                        </div>
-                        <h1>12</h1>
-                      </div>
-
-                      <div className="card custom-card">
-                        <div className="card-inner">
-                          <h3>CUSTOMERS</h3>
-                          <BsPeopleFill className="card_icon" />
-                        </div>
-                        <h1>{salesData.customersCount}</h1>
-                      </div>
-
-                      <div className="card custom-card">
-                        <div className="card-inner">
-                          <h3>Total Sales</h3>
-                          <BsFillBellFill className="card_icon" />
-                        </div>
-                        <h1>{salesData.totalSales}&#8377;</h1>
                       </div>
                     </div>
-                    <div className="charts d-flex justify-content-around me-4">
-                      <ResponsiveContainer width="50%" height={400}>
+
+                    <div className="col-md-3 mb-4">
+                      <div className="card custom-card shadow-sm">
+                        <div className="card-body d-flex align-items-center">
+                          <div className="card-icon bg-success text-white rounded-circle p-3">
+                            <BsFillGrid3X3GapFill />
+                          </div>
+                          <div className="ms-3">
+                            <h5 className="card-title">CATEGORIES</h5>
+                            <h1 className="card-footer text-success">12</h1>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="col-md-3 mb-4">
+                      <div className="card custom-card shadow-sm">
+                        <div className="card-body d-flex align-items-center">
+                          <div className="card-icon bg-info text-white rounded-circle p-3">
+                            <BsPeopleFill />
+                          </div>
+                          <div className="ms-3">
+                            <h5 className="card-title">CUSTOMERS</h5>
+                            <h1 className="card-footer text-info">
+                              {salesData.customersCount}
+                            </h1>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="col-md-3 mb-4">
+                      <div className="card custom-card shadow-sm">
+                        <div className="card-body d-flex align-items-center">
+                          <div className="card-icon bg-danger text-white rounded-circle p-3">
+                            <BsFillBellFill />
+                          </div>
+                          <div className="ms-3">
+                            <h5 className="card-title">Total Sales</h5>
+                            <h1 className="card-footer text-danger">
+                              {salesData.totalSales}&#8377;
+                            </h1>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="d-flex justify-content-between">
+                    <div className="w-50 pe-2">
+                      <ResponsiveContainer width="100%" height={400}>
                         <BarChart data={salesData.salesArray}>
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="name" />
@@ -531,8 +561,10 @@ export default function AdminPanel() {
                           <Bar dataKey="totalDeliveryCost" fill="#82ca9d" />
                         </BarChart>
                       </ResponsiveContainer>
+                    </div>
 
-                      <ResponsiveContainer width="50%" height={400}>
+                    <div className="w-50 ps-2">
+                      <ResponsiveContainer width="100%" height={400}>
                         <LineChart data={salesData.salesArray}>
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="name" />
@@ -553,7 +585,7 @@ export default function AdminPanel() {
                         </LineChart>
                       </ResponsiveContainer>
                     </div>
-                  </main>
+                  </div>
                 </section>
               )}
 
@@ -599,7 +631,7 @@ export default function AdminPanel() {
                   {verifiedSellers.length > 0 && (
                     <div className="mt-5">
                       <h4 className="mb-3 text-success">Verified Sellers</h4>
-                      <ul className="list-group list-unstyled">
+                      <ul className="list-group list-unstyled" style={{maxHeight:"330px",overflowY:"auto"}}>
                         {verifiedSellers.map((user) => (
                           <li
                             key={user._id}
@@ -609,8 +641,12 @@ export default function AdminPanel() {
                             }}
                           >
                             <div className="d-flex justify-content-between align-items-center flex-row">
-                              <div><h5 className="text-success">{user.userName}</h5>
-                              <p className="mb-1">{user.email}</p></div>
+                              <div>
+                                <h5 className="text-success">
+                                  {user.userName}
+                                </h5>
+                                <p className="mb-1">{user.email}</p>
+                              </div>
                               <span className="badge badge-success">
                                 Verified Seller
                               </span>

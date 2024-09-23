@@ -2,10 +2,9 @@ import React, { useEffect, useState } from "react";
 import { MagnifyingGlass } from "react-loader-spinner";
 import { Link, useParams } from "react-router-dom";
 import "@fortawesome/fontawesome-free/css/all.min.css";
-
 import ScrollToTop from "../ScrollToTop";
-import axios from "axios";
 import { toast } from "react-toastify";
+import { addToCart, fetchDepartmentsAndTypes, fetchProductsByDepartment, fetchProductsByType } from "../../api";
 
 function Dropdown() {
   const [loaderStatus, setLoaderStatus] = useState(true);
@@ -16,23 +15,14 @@ function Dropdown() {
   const [viewMode, setViewMode] = useState("grid");
   const [currentPage, setCurrentPage] = useState(1);
   const [productsPerPage] = useState(12);
-
   const { department } = useParams();
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         const userData = JSON.parse(localStorage.getItem("userData"));
-        const response = await axios.get(
-          `http://localhost:5000/api/product/${department}`,
-          {
-            headers: {
-              Authorization: `Bearer ${userData.token}`,
-            },
-          }
-        );
-
-        setProducts(response.data.products);
+        const fetchedProducts = await fetchProductsByDepartment(department, userData.token);
+        setProducts(fetchedProducts);
         setCurrentPage(1);
       } catch (error) {
         console.error("Error fetching products:", error);
@@ -46,18 +36,8 @@ function Dropdown() {
     const getprod = async () => {
       try {
         const userData = JSON.parse(localStorage.getItem("userData"));
-        const res = await axios.get(
-          `http://localhost:5000/api/product/${department}/${type}`,
-          {
-            headers: {
-              Authorization: `Bearer ${userData.token}`,
-            },
-          }
-        );
-        if (!res) {
-          console.log("not found:", res.data);
-        }
-        setProducts(res.data.products);
+        const fetchedProducts = await fetchProductsByType(department, type, userData.token);
+        setProducts(fetchedProducts);
       } catch (error) {
         console.log("error fetching products:", error);
       }
@@ -66,48 +46,30 @@ function Dropdown() {
   }, [department, type]);
 
   useEffect(() => {
-    const fetchDepartmentsAndTypes = async () => {
+    const loadDepartmentsAndTypes = async () => {
       try {
         const userData = JSON.parse(localStorage.getItem("userData"));
-        const response = await axios.get(
-          "http://localhost:5000/api/product/departmentsandtypes",
-          {
-            headers: {
-              Authorization: `Bearer ${userData.token}`,
-            },
-          }
-        );
-
-        if (response.data.success) {
-          setDepartmentsAndTypes(response.data.data);
+        const response = await fetchDepartmentsAndTypes(userData.token); // Call the imported function
+        
+        if (response.success) { // Check for success
+          setDepartmentsAndTypes(response.data);
           setLoaderStatus(false);
         } else {
-          console.error("Error fetching data:", response.data.message);
+          console.error("Error fetching data:", response.message);
         }
       } catch (error) {
         console.error("Error fetching departments and types:", error);
       }
     };
-    fetchDepartmentsAndTypes();
+    loadDepartmentsAndTypes(); // Call the renamed function
   }, []);
+  
 
   const handleaddtocart = async (productId) => {
     try {
       const userData = JSON.parse(localStorage.getItem("userData"));
-      const response = await axios.post(
-        "http://localhost:5000/api/order/cart/add",
-        {
-          productId,
-          quantity: 1,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${userData.token}`,
-          },
-        }
-      );
-      toast.success(response.data.message);
-      console.log(response.data);
+      const response = await addToCart(productId, userData.token);
+      toast.success(response.message);
     } catch (error) {
       console.log("error while adding to cart:", error);
     }
@@ -130,17 +92,18 @@ function Dropdown() {
   const handleViewChange = (view) => {
     setViewMode(view);
   };
+
   const productClasses = {
     list: "row row-cols-1 gap-2",
     grid: "row row-cols-2 row-cols-md-2",
     gridgap: "row row-cols-4 row-cols-md-4",
   };
 
-  const [sortproducts, setSortproducts] = useState("Featured");
+  const [sortProducts, setSortProducts] = useState("Featured");
 
   const handleSortChange = (e) => {
     const sortingCriteria = e.target.value;
-    setSortproducts(sortingCriteria);
+    setSortProducts(sortingCriteria);
 
     let sorted = [...products]; // Create a copy of the products array
     if (sortingCriteria === "Low to High") {
@@ -152,13 +115,10 @@ function Dropdown() {
     setProducts(sorted); // Update the sorted products in the state
   };
 
-
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
-  const currentProducts = products.slice(
-    indexOfFirstProduct,
-    indexOfLastProduct
-  );
+  const currentProducts = products.slice(indexOfFirstProduct, indexOfLastProduct);
+
   // Change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 

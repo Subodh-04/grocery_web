@@ -1,46 +1,30 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import graphics from "../../images/store-graphics.svg";
 
 import { Slide, Zoom } from "react-awesome-reveal";
 import { MagnifyingGlass } from "react-loader-spinner";
 import ScrollToTop from "../ScrollToTop";
 import { Link } from "react-router-dom";
-// import storelogo10 from '../images/store'
-// import storelogofrom '../images/store-graphics-2.svg'
+import { fetchStores } from "../../api";
 
 const StoreList = () => {
-  // loading
   const [loaderStatus, setLoaderStatus] = useState(true);
   const [stores, setStores] = useState([]);
+
   useEffect(() => {
     setTimeout(() => {
       setLoaderStatus(false);
     }, 1500);
   }, []);
+
   useEffect(() => {
-    const fetchStores = async () => {
-      try {
-        const userData = JSON.parse(localStorage.getItem("userData"));
-        const response = await axios.get("http://localhost:5000/api/store/", {
-          headers: {
-            Authorization: `Bearer ${userData.token}`,
-          },
-        });
-        if (!response) {
-          console.log("stores not found.");
-        }
-        console.log(response.data.Stores);
-        
-        setStores(response.data.Stores);
-      } catch (err) {
-        console.log(err.message);
-      }
+    const getStores = async () => {
+      const fetchedStores = await fetchStores();
+      setStores(fetchedStores);
     };
 
-    fetchStores();
+    getStores();
   }, []);
-
   return (
     <div>
       <div>
@@ -147,14 +131,17 @@ const StoreList = () => {
                           <div className="card flex-row p-8 card-product">
                             <div>
                               <img
-                                src={store.storeImage || "default-logo.png"} // Provide a default image if store.logo is unavailable
+                                src={store.storeImage || "default-logo.png"}
                                 alt="stores"
                                 className="rounded-circle icon-shape icon-xl"
                               />
                             </div>
                             <div className="ms-6">
                               <h5 className="mb-1">
-                                <Link to={`/Single-Store/${store._id}`} className="text-inherit">
+                                <Link
+                                  to={`/Single-Store/${store._id}`}
+                                  className="text-inherit"
+                                >
                                   {store.storeName}
                                 </Link>
                               </h5>
@@ -187,7 +174,7 @@ const StoreList = () => {
                               <div>
                                 {store.proximity && (
                                   <div className="badge text-bg-light border">
-                                    {store.proximity}  away
+                                    {store.proximity} away
                                   </div>
                                 )}
                               </div>

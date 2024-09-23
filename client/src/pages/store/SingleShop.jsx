@@ -22,13 +22,13 @@ const SingleShop = () => {
   const [totalProducts, setTotalProducts] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [productsPerPage] = useState(12);
-  const { id } = useParams(); // Extract storeId from the URL
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  const { id } = useParams();
   const handleCategoryClick = (category) => {
     setSelectedcategory(category);
     setCurrentPage(1);
   };
 
-  console.log("Selected Category:", selectedcategory);
 
   useEffect(() => {
     if (selectedcategory) {
@@ -46,6 +46,7 @@ const SingleShop = () => {
             }
           );
           setProducts(res.data.products); // Store products
+          setFilteredProducts(res.data.products);
         } catch (error) {
           console.error("Error fetching products:", error.message);
           alert("Failed to fetch products");
@@ -76,7 +77,8 @@ const SingleShop = () => {
         }
 
         setStoreDet(response.data.data); // Store store details
-        setProducts(response.data.products); // Store products initially
+        setProducts(response.data.products);
+        setFilteredProducts(response.data.products);
         setTotalProducts(response.data.totalProducts);
       } catch (error) {
         console.log("Error fetching store: ", error.message);
@@ -86,7 +88,6 @@ const SingleShop = () => {
     fetchStore();
   }, [id]);
 
-  
   const [viewMode, setViewMode] = useState("grid");
   const handleViewChange = (view) => {
     setViewMode(view);
@@ -135,6 +136,31 @@ const SingleShop = () => {
       console.log("error while adding to cart:", error);
     }
   };
+
+  const [searchterm, setSearchTerm] = useState("");
+  console.log("Search Term:", searchterm);
+
+  const handleSearch = (e) => {
+    const term = e.target.value.toLowerCase();
+    setSearchTerm(term);
+
+    if (term) {
+      const results = products.filter((product) => {
+        const nameMatch =
+          product.name && product.name.toLowerCase().includes(term);
+        const categoryMatch =
+          product.category && product.category.toLowerCase().includes(term);
+        return nameMatch || categoryMatch;
+      });
+      console.log("Filtered Products:", results);
+      setFilteredProducts(results);
+    } else {
+      console.log("doesnt work");
+      
+      setFilteredProducts(products); // Reset to all products if search term is empty
+    }
+  };
+
 
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
@@ -216,63 +242,6 @@ const SingleShop = () => {
                         </div>
                       </div>
                       <hr />
-                      {/* nav */}
-                      <ul className="nav flex-column nav-pills nav-pills-dark">
-                        {/* nav item */}
-                        <li className="nav-item">
-                          <Link
-                            className="nav-link active"
-                            aria-current="page"
-                            to="#"
-                          >
-                            <i className="feather-icon icon-shopping-bag me-2" />
-                            Shop
-                          </Link>
-                        </li>
-                        {/* nav item */}
-                        <li className="nav-item">
-                          <Link className="nav-link" to="#">
-                            <i className="fas fa-gift me-2" />
-                            Deals
-                          </Link>
-                        </li>
-                        {/* nav item */}
-                        <li className="nav-item">
-                          <Link className="nav-link" to="#">
-                            <i className="fas fa-map-pin me-2" />
-                            Buy It Again
-                          </Link>
-                        </li>
-                        {/* nav item */}
-                        <li className="nav-item">
-                          <Link className="nav-link" to="#">
-                            <i className="fas fa-star me-2" />
-                            Reviews
-                          </Link>
-                        </li>
-                        {/* nav item */}
-                        <li className="nav-item">
-                          <Link className="nav-link" to="#">
-                            <i className="fas fa-book me-2" />
-                            Recipes
-                          </Link>
-                        </li>
-                        {/* nav item */}
-                        <li className="nav-item">
-                          <Link className="nav-link" to="#">
-                            <i className="fas fa-phone-alt me-2" />
-                            Contact
-                          </Link>
-                        </li>
-                        {/* nav item */}
-                        <li className="nav-item">
-                          <Link className="nav-link" to="#">
-                            <i className="fas fa-clipboard me-2" />
-                            Policy
-                          </Link>
-                        </li>
-                      </ul>
-                      <hr />
                       <div>
                         <ul className="nav flex-column nav-links">
                           {storeDet.categories.map((category, index) => (
@@ -305,6 +274,8 @@ const SingleShop = () => {
                               className="form-control"
                               id="exampleFormControlInput1"
                               placeholder="Search E-Grocery Super Market"
+                              value={searchterm}
+                              onChange={handleSearch}
                             />
                             <span className="position-absolute end-0 top-0 mt-2 me-3">
                               <svg

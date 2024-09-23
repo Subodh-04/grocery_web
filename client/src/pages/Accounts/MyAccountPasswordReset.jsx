@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import axios from "axios";
 import { toast } from "react-toastify";
+import { resetPassword } from "../../api";
 
 const MyAccountPasswordReset = () => {
   const [password, setPassword] = useState("");
@@ -9,9 +9,7 @@ const MyAccountPasswordReset = () => {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const { resetToken } = useParams();
-  const navigate=useNavigate();
-
-  console.log("Reset Token:", resetToken);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,18 +20,12 @@ const MyAccountPasswordReset = () => {
       setError("Passwords do not match");
       return;
     }
-
     try {
-      const userData = JSON.parse(localStorage.getItem("userData"));
-      const response = await axios.post(
-        `http://localhost:5000/api/auth/user/changepass/${resetToken}`,
-        { newPassword: password },
-      );
-
-      setMessage(response.data.message || "Password reset successful");
-      toast.success("Password Reset Successful.Redirecting to SignIn Page");
+      const response = await resetPassword(resetToken, password);
+      setMessage(response.message || "Password reset successful");
+      toast.success("Password Reset Successful. Redirecting to SignIn Page");
       localStorage.removeItem("userData");
-      navigate("/MyAccountSignIn")
+      navigate("/MyAccountSignIn");
     } catch (error) {
       setError(
         error.response?.data?.message || "An error occurred while resetting password"
