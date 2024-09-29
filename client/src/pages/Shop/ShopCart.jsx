@@ -2,10 +2,9 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { MagnifyingGlass } from "react-loader-spinner";
 import ScrollToTop from "../ScrollToTop";
-import axios from "axios";
+import { decreaseCartQuantity, fetchCart, getUserToken, increaseCartQuantity, removeFromCart } from "../../api";
 
 const ShopCart = () => {
-  // loading
   const [loaderStatus, setLoaderStatus] = useState(true);
   const [cart, setCart] = useState([]);
   const [totalamount, setTotalAmount] = useState(0);
@@ -16,28 +15,21 @@ const ShopCart = () => {
       setLoaderStatus(false);
     }, 1500);
   }, []);
+
   useEffect(() => {
     const getCart = async () => {
       try {
-        const userData = JSON.parse(localStorage.getItem("userData"));
-        const response = await axios.get(
-          "http://localhost:5000/api/order/cart",
-          {
-            headers: {
-              Authorization: `Bearer ${userData.token}`,
-            },
-          }
-        );
-
-        // Ensure the response data is in the expected format
-        if (Array.isArray(response.data.cart)) {
-          setCart(response.data.cart);
-          setTotalAmount(response.data.totalAmount);
-        } else {
-          alert("Invalid data format");
+        const token = getUserToken();
+        if (!token) {
+          alert("User not authenticated");
+          return;
         }
+
+        const cartData = await fetchCart(token);
+        setCart(cartData.cart);
+        setTotalAmount(cartData.totalAmount);
       } catch (error) {
-        console.error("Error fetching cart data:", error.message);
+        console.error(error.message);
         alert("Failed to fetch cart data");
       }
     };
@@ -47,54 +39,46 @@ const ShopCart = () => {
 
   const handleRemove = async (productId) => {
     try {
-      const userData = JSON.parse(localStorage.getItem("userData"));
-      const res = await axios.delete(
-        `http://localhost:5000/api/order/cart/delete/${productId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${userData.token}`,
-          },
-        }
-      );
+      const token = getUserToken();
+      if (!token) {
+        alert("User not authenticated");
+        return;
+      }
+
+      await removeFromCart(productId, token);
       setCart(cart.filter((item) => item.productId !== productId));
-      alert(res.data.message);
     } catch (error) {
-      console.error("Error removing product from cart:", error);
+      console.error(error.message);
     }
   };
+
   const handleDecrease = async (productId) => {
     try {
-      const userData = JSON.parse(localStorage.getItem("userData"));
-      const res = await axios.post(
-        "http://localhost:5000/api/order/cart/decrease",
-        { productId, quantity: 1 },
-        {
-          headers: {
-            Authorization: `Bearer ${userData.token}`,
-          },
-        }
-      );
-      setCart(res.data.cart);
+      const token = getUserToken();
+      if (!token) {
+        alert("User not authenticated");
+        return;
+      }
+
+      const updatedCart = await decreaseCartQuantity(productId, token);
+      setCart(updatedCart.cart);
     } catch (error) {
-      console.error("Error decreasing quantity:", error);
+      console.error(error.message);
     }
   };
 
   const handleIncrease = async (productId) => {
     try {
-      const userData = JSON.parse(localStorage.getItem("userData"));
-      const res = await axios.post(
-        "http://localhost:5000/api/order/cart/increase",
-        { productId, quantity: 1 },
-        {
-          headers: {
-            Authorization: `Bearer ${userData.token}`,
-          },
-        }
-      );
-      setCart(res.data.cart);
+      const token = getUserToken();
+      if (!token) {
+        alert("User not authenticated");
+        return;
+      }
+
+      const updatedCart = await increaseCartQuantity(productId, token);
+      setCart(updatedCart.cart);
     } catch (error) {
-      console.error("Error increasing quantity:", error);
+      console.error(error.message);
     }
   };
 

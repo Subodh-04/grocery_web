@@ -90,11 +90,8 @@ const MyAccountAddress = () => {
 
   const handleEditAddress = async (addressId) => {
     try {
-      setEditmode(true);
       const add = address.find((addr) => addr._id === addressId);
-
       if (!add) {
-        console.error("Address not found for the given ID:", addressId);
         toast.error("Address not found.");
         return;
       }
@@ -113,8 +110,61 @@ const MyAccountAddress = () => {
         country: add.country || "",
         isdefault: add.isdefault || false,
       });
+
+      setEditmode(true);
+      setSelectedAddress(add); // Save the selected address for updating later
     } catch (error) {
-      console.log("Error updating address:", error);
+      console.error("Error preparing address for editing:", error);
+      toast.error("An error occurred while preparing the address.");
+    }
+  };
+
+  const handleUpdateAddress = async () => {
+    if (!selectedAddress) {
+      toast.error("No address selected for update.");
+      return;
+    }
+
+    const street = `${formdata.address1} | ${formdata.address2}`;
+    const name = `${formdata.firstname} ${formdata.lastname}`;
+    const addressData = {
+      name,
+      street,
+      city: formdata.city,
+      state: formdata.state,
+      country: formdata.country,
+      zip: formdata.zip,
+      isdefault: formdata.isdefault,
+    };
+
+    try {
+      const res = await updateAddress(selectedAddress._id, addressData);
+      toast.success(res.message);
+
+      // Update the address list in local state
+      setAddress((prevAddresses) =>
+        prevAddresses.map((addr) =>
+          addr._id === selectedAddress._id ? { ...addr, ...addressData } : addr
+        )
+      );
+
+      // Reset state
+      setEditmode(false);
+      setFormdata({
+        firstname: "",
+        lastname: "",
+        address1: "",
+        address2: "",
+        city: "",
+        state: "",
+        country: "",
+        zip: "",
+        isdefault: false,
+      });
+      setSelectedAddress(null); // Clear selected address
+    } catch (error) {
+      console.error("Error updating address:", error);
+      toast.error("An error occurred while updating the address.");
     }
   };
 
@@ -545,9 +595,7 @@ const MyAccountAddress = () => {
                           className="btn btn-primary"
                           type="button"
                           data-bs-dismiss="modal"
-                          onClick={() => {
-                            handleEditAddress(address._id);
-                          }}
+                          onClick={handleUpdateAddress}
                         >
                           Edit Address
                         </button>

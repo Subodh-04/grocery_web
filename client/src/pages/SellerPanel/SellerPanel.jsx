@@ -14,6 +14,16 @@ import "../../App.css";
 import { MagnifyingGlass } from "react-loader-spinner";
 import { RxCross2 } from "react-icons/rx";
 import { toast } from "react-toastify";
+import {
+  addProduct,
+  createStore,
+  fetchStoreDetails,
+  fetchUserDetails,
+  getUserToken,
+  requestPasswordReset,
+  updatePassword,
+  updateUserProfile,
+} from "../../api";
 
 export default function SellerPanel() {
   const [activeSection, setActiveSection] = useState("overview");
@@ -57,10 +67,10 @@ export default function SellerPanel() {
   const [editingProductId, setEditingProductId] = useState(null);
   const [orders, setOrders] = useState([]);
   const [totalOrders, setTotalOrders] = useState(0);
-  const [pendingOrders, setPendingOrders] = useState(0);
-  const [completedOrders, setCompletedOrders] = useState(0);
+  const [salesproduct, setSalesproduct] = useState(0);
   const [viewDetails, setViewDetails] = useState([]);
   const [viewDetailsModal, setViewDetailsModal] = useState(false);
+  const token = getUserToken();
 
   const [storeDetails, setStoreDetails] = useState({
     storeName: "",
@@ -88,13 +98,8 @@ export default function SellerPanel() {
       try {
         const userData = JSON.parse(localStorage.getItem("userData"));
 
-        if (userData && userData.userId) {
-          // Fetch user details using userId
-          const response = await axios.get(
-            `http://localhost:5000/api/auth/user/${userData.userId}`
-          );
-
-          const user = response.data;
+        if (token) {
+          const user = await fetchUserDetails(userData.userId, token);
 
           if (!user.store) {
             setHasStore(false);
@@ -117,25 +122,31 @@ export default function SellerPanel() {
     };
 
     checkStoreStatus();
-  }, []); // No dependencies here to ensure it runs once on component mount or login
+  }, [token]);
 
   useEffect(() => {
-    const loggeduserDetails = async () => {
+    const loggedUserDetails = async () => {
       try {
         const userData = JSON.parse(localStorage.getItem("userData"));
-        const user = await axios.get(
-          `http://localhost:5000/api/auth/user/${userData.userId}`
-        );
-        if (!user) {
-          console.log("User not found");
+
+        if (userData && userData.userId && userData.token) {
+          const user = await fetchUserDetails(userData.userId, token);
+
+          if (!user) {
+            console.log("User not found");
+          } else {
+            setLoggedUser(user);
+          }
+        } else {
+          console.log("No user data found in localStorage");
         }
-        setLoggedUser(user.data);
       } catch (error) {
-        console.log("Error :", error);
+        console.log("Error:", error);
       }
     };
-    loggeduserDetails();
-  }, []);
+
+    loggedUserDetails();
+  }, [token]);
 
   useEffect(() => {
     if (hasStore === false) {
@@ -146,21 +157,24 @@ export default function SellerPanel() {
   useEffect(() => {
     const fetchstoredetails = async () => {
       const userData = JSON.parse(localStorage.getItem("userData"));
-      if (hasStore === true) {
-        const storeres = await axios.get(
-          `http://localhost:5000/api/store/${userData.store}`,
-          {
-            headers: {
-              Authorization: `Bearer ${userData.token}`,
-            },
-          }
-        );
+      if (hasStore && userData && userData.store && token) {
+        try {
+          const storeData = await fetchStoreDetails(
+            userData.store,
+            userData.token
+          );
 
-        setStoreDetails(storeres.data.data);
+          setStoreDetails(storeData.data);
+        } catch (error) {
+          console.log("Error fetching store details:", error.message);
+        }
+      } else {
+        console.log("No store data or user token found in localStorage");
       }
     };
+
     fetchstoredetails();
-  }, [hasStore]);
+  }, [hasStore, token]);
 
   const handleUpdateStore = async () => {
     try {
@@ -205,110 +219,106 @@ export default function SellerPanel() {
     }));
   };
 
-  // New function to handle store creation
   const handleStoreCreationSubmit = async (e) => {
     e.preventDefault();
+
     try {
       const userData = JSON.parse(localStorage.getItem("userData"));
-      const response = await axios.post(
-        "http://localhost:5000/api/store/",
-        {
-          ...storeDetails,
-          seller: userData.userId,
-        },
-        {
-          headers: { Authorization: `Bearer ${userData.token}` },
-        }
-      );
 
-      if (response.status === 201) {
-        toast.success("Store created successfully!");
-        setHasStore(true);
-        setShowModal(false);
+      if (userData && userData.userId && token) {
+        const newStore = await createStore(
+          storeDetails,
+          userData.userId,
+          token
+        );
+
+        if (newStore) {
+          toast.success("Store created successfully!");
+          setHasStore(true);
+          setShowModal(false);
+        }
+      } else {
+        toast.error("User data not found or token is missing.");
       }
     } catch (error) {
       console.error("Error creating store:", error);
       toast.error("Failed to create store.");
     }
   };
-  //update user details
+
   const handleUpateUserDetails = async () => {
     try {
       const userData = JSON.parse(localStorage.getItem("userData"));
-      const response = await axios.put(
-        "http://localhost:5000/api/auth/user/profile",
-        {
+      if (userData && userData.token) {
+        const profileData = {
           userName: userDetails.name,
           email: userDetails.email,
           phone: userDetails.phone,
-        },
-        {
-          headers: { Authorization: `Bearer ${userData.token}` },
-        }
-      );
+        };
+        const updatedUser = await updateUserProfile(
+          profileData,
+          userData.token
+        );
+        localStorage.setItem(
+          "userData",
+          JSON.stringify({ ...userData, ...updatedUser })
+        );
 
-      localStorage.setItem(
-        "userData",
-        JSON.stringify({ ...userData, ...response.data })
-      );
-      toast.info("Details updated successfully!");
+        toast.info("Details updated successfully!");
+      } else {
+        toast.error("User not authenticated. Please log in again.");
+      }
     } catch (error) {
       console.error("Error updating details:", error);
+      toast.error("Failed to update details. Please try again.");
     }
   };
 
   const handlePasswordResetRequest = async () => {
     try {
-      const emails = loggeduser.email;
-      console.log(emails);
-
-      const userData = JSON.parse(localStorage.getItem("userData"));
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/user/resetpass",
-        { email: emails },
-        {
-          headers: {
-            Authorization: `Bearer ${userData.token}`,
-          },
-        }
-      );
-      console.log("password request:", response.data);
-
-      toast.success(response.data.message);
+      if (token) {
+        const response = await requestPasswordReset(loggeduser.email, token);
+        console.log("Password reset request:", response);
+        toast.success(response.message);
+      } else {
+        toast.error("User not authenticated. Please log in again.");
+      }
     } catch (error) {
       console.error("Error requesting password reset:", error);
+      toast.error("Failed to request password reset. Please try again.");
     }
   };
-  //update userpassword
+
   const handlePasswordUpdate = async () => {
     try {
       const userData = JSON.parse(localStorage.getItem("userData"));
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/user/updatepass/",
-        {
-          userId: userData.userId,
-          currentPassword: userDetails.currentPassword,
-          newPassword: userDetails.newPassword,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${userData.token}`,
-          },
+
+      if (userData && userData.userId && userData.token) {
+        const response = await updatePassword(
+          userData.userId,
+          userDetails.currentPassword,
+          userDetails.newPassword,
+          userData.token
+        );
+
+        if (!response) {
+          toast.error("Failed to update password. Please try again.");
+        } else {
+          toast.success(response.message);
+          setUserDetails({
+            ...userDetails,
+            currentPassword: "",
+            newPassword: "",
+          });
+
+          console.log("Password updated successfully", response);
         }
-      );
-      if (!response) {
-        toast.error(response.data.message);
-        console.log(response.data.message);
+      } else {
+        toast.error("User not authenticated. Please log in again.");
       }
-      toast.success(response.data.message);
-      setUserDetails({
-        ...userDetails,
-        currentPassword: "",
-        newPassword: "",
-      });
-      console.log("password updated successfully", response.data);
     } catch (error) {
-      console.log("Error while updating Password:", error);
+      console.log("Error while updating password:", error);
+      toast.error("Failed to update password. Please try again.");
     }
   };
 
@@ -421,28 +431,24 @@ export default function SellerPanel() {
   const handleaddProduct = async () => {
     try {
       const userData = JSON.parse(localStorage.getItem("userData"));
-      const sellerid = userData.userId;
-      const storeid = userData.store;
+      const sellerId = userData.userId; // Ensure this is correct
+      const storeId = userData.store; // Ensure this is correct
 
+      // Prepare the product payload
       const productPayload = {
         ...productdet,
-        prod_img: image,
-        seller: sellerid,
-        store: storeid,
+        prod_img: image, // Make sure this is in the right format
+        seller: sellerId,
+        store: storeId,
       };
 
-      const response = await axios.post(
-        "http://localhost:5000/api/product/",
-        productPayload,
-        {
-          headers: {
-            Authorization: `Bearer ${userData.token}`,
-          },
-        }
-      );
+      // Call the API to add the product
+      const response = await addProduct(productPayload, userData.token);
 
-      setAddProductModal(false);
-      toast.success(response.data.message);
+      setAddProductModal(false); // Close the modal
+      toast.success(response.message); // Show success message
+
+      // Reset product details
       setProductDet({
         name: "",
         prod_img: "",
@@ -452,12 +458,15 @@ export default function SellerPanel() {
         quantity: 0,
         department: "",
       });
-      setImage(null);
+
+      setImage(null); // Clear the image
     } catch (error) {
+      // Log error details
       console.log(
         "Error Adding Product:",
         error.response ? error.response.data : error.message
       );
+      toast.error("Failed to add product.");
     }
   };
 
@@ -502,6 +511,8 @@ export default function SellerPanel() {
   };
 
   const handleUpdateProduct = async () => {
+    console.log("Product Details before Update: ", productdet);
+    console.log("Image URL before Update: ", image);
     try {
       const userData = JSON.parse(localStorage.getItem("userData"));
 
@@ -545,8 +556,6 @@ export default function SellerPanel() {
     }
   };
 
-
-
   useEffect(() => {
     const fetchOrders = async () => {
       try {
@@ -565,8 +574,7 @@ export default function SellerPanel() {
         } else {
           setOrders(response.data.data); // Assuming response.data.data contains the list of orders
           setTotalOrders(response.data.total);
-          setPendingOrders(response.data.pending);
-          setCompletedOrders(response.data.completed);
+          setSalesproduct(response.data.totalSalesProducts);
         }
       } catch (error) {
         console.log("Error while fetching Orders:", error);
@@ -593,7 +601,7 @@ export default function SellerPanel() {
           },
         }
       );
-  
+
       if (response.data) {
         // Update the state if the response is successful
         setOrders((prevOrders) =>
@@ -616,7 +624,7 @@ export default function SellerPanel() {
       }
     } catch (error) {
       console.error("Error updating status:", error);
-  
+
       // Handle specific errors
       if (error.response && error.response.data) {
         console.error("API response error:", error.response.data.message);
@@ -642,15 +650,15 @@ export default function SellerPanel() {
       console.log("Error Fetching Order Details:", error);
     }
   };
-  
+
   const handlePrint = () => {
     if (!orderDetails || !orderDetails.products) {
       console.log("Order details are not available.");
       return;
     }
-  
+
     const printWindow = window.open("", "", "width=800,height=600");
-  
+
     printWindow.document.write(`
       <html>
         <head>
@@ -694,8 +702,12 @@ export default function SellerPanel() {
                 ${orderDetails.buyer.customerName || "N/A"} <br/>
                 ${orderDetails.buyer.email || "N/A"} <br/>
                 ${orderDetails.buyer.phone || "N/A"} <br/>
-                ${orderDetails.buyer.address.street || "N/A"}, ${orderDetails.buyer.address.city || "N/A"}, 
-                ${orderDetails.buyer.address.postalCode || "N/A"}, ${orderDetails.buyer.address.country || "N/A"}
+                ${orderDetails.buyer.address.street || "N/A"}, ${
+      orderDetails.buyer.address.city || "N/A"
+    }, 
+                ${orderDetails.buyer.address.postalCode || "N/A"}, ${
+      orderDetails.buyer.address.country || "N/A"
+    }
               </p>
             </div>
   
@@ -710,18 +722,26 @@ export default function SellerPanel() {
                 </tr>
               </thead>
               <tbody>
-                ${orderDetails.products.map((product, index) => `
+                ${orderDetails.products
+                  .map(
+                    (product, index) => `
                   <tr>
                     <td>${index + 1}</td>
                     <td>${product.productName || "N/A"}</td>
                     <td>${product.productPrice || 0}&#8377;</td>
                     <td>${product.quantity || 0}</td>
-                    <td>${(product.productPrice * product.quantity) || 0}&#8377;</td>
+                    <td>${
+                      product.productPrice * product.quantity || 0
+                    }&#8377;</td>
                   </tr>
-                `).join("")}
+                `
+                  )
+                  .join("")}
                 <tr>
                   <td colspan="4" class="invoice-total">Subtotal</td>
-                  <td>${(orderDetails.totalAmount - orderDetails.deliveryCost) || 0}&#8377;</td>
+                  <td>${
+                    orderDetails.totalAmount - orderDetails.deliveryCost || 0
+                  }&#8377;</td>
                 </tr>
                 <tr>
                   <td colspan="4" class="invoice-total">Shipping Charge</td>
@@ -737,13 +757,12 @@ export default function SellerPanel() {
         </body>
       </html>
     `);
-  
+
     printWindow.document.close();
     printWindow.focus();
     printWindow.print();
     printWindow.close();
   };
-  
 
   return (
     <div className="container-fluid" style={{ position: "fixed" }}>
@@ -885,90 +904,81 @@ export default function SellerPanel() {
             <div className="content">
               {activeSection === "overview" && hasStore && (
                 <div>
-                  <h1 className="fw-bold">Overview</h1>
-                  <div className="card py-3 border-0 mb-4">
-                    <div className="d-flex justify-content-between align-items-center">
-                      <div>
-                        <p className="mb-0">Earnings: 13,210 TK April</p>
-                        <p className="mb-0">Total Sales: 15 pcs April</p>
-                      </div>
-                      <div>
-                        <h2>Current Balance: 98,961.33 TK</h2>
-                        <button className="btn btn-primary">
-                          Withdraw Now
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                  {/* Example of additional stats */}
-                  <div className="row">
-                    <div className="col-lg-4 col-md-6 mb-4">
-                      <div className="card p-3">
-                        <h5 className="fw-bold">{totalproducts}</h5>
-                        <p>All Products</p>
-                      </div>
-                    </div>
-                    <div className="col-lg-4 col-md-6 mb-4">
-                      <div className="card p-3">
-                        <h5 className="fw-bold">15</h5>
-                        <p>Sales Products</p>
-                      </div>
-                    </div>
-                    <div className="col-lg-4 col-md-6 mb-4">
-                      <div className="card p-3">
-                        <h5 className="fw-bold">16</h5>
-                        <p>New Orders</p>
-                      </div>
-                    </div>
-                  </div>
+                  <h1 className="fw-bold display-4 mb-4 text-center text-primary">
+                    Store Overview
+                  </h1>
 
-                  {/* Recent Sold Products */}
-                  <div className="card p-3 mb-4">
-                    <h4 className="fw-bold mb-3">Recent Sold</h4>
-                    <ul className="list-group list-group-flush">
-                      <li className="list-group-item py-3">
-                        <div className="d-flex justify-content-between align-items-center">
+                  {/* Stats Section */}
+                  <div className="row mb-5">
+                    <div className="col-lg-4 col-md-6 mb-4">
+                      <div className="card p-4 shadow-lg border-0 rounded-4 transition-transform hover:scale-105">
+                        <div className="d-flex justify-content-center align-items-center">
+                          <i className="bi bi-box-seam fs-3 text-warning me-3"></i>
                           <div>
-                            <p className="mb-0">Body Parts</p>
-                            <small className="text-muted">
-                              Category: Car Care
-                            </small>
-                          </div>
-                          <div>
-                            <p className="mb-0">900 TK</p>
-                            <small className="text-muted">
-                              Date: 15/03/2022
-                            </small>
-                          </div>
-                          <div>
-                            <span className="badge bg-warning">Processing</span>
+                            <h5 className="fw-bold display-5">
+                              {totalproducts}
+                            </h5>
+                            <p className="text-muted mb-0">Total Products</p>
                           </div>
                         </div>
-                      </li>
-                      {/* Repeat the above list item for each sold product */}
-                    </ul>
+                      </div>
+                    </div>
+
+                    <div className="col-lg-4 col-md-6 mb-4">
+                      <div className="card p-4 shadow-lg border-0 rounded-4 transition-transform hover:scale-105">
+                        <div className="d-flex justify-content-center align-items-center">
+                          <i className="bi bi-cart-check fs-3 text-success me-3"></i>
+                          <div>
+                            <h5 className="fw-bold display-5">
+                              {salesproduct}
+                            </h5>
+                            <p className="text-muted mb-0">Sales Products</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="col-lg-4 col-md-6 mb-4">
+                      <div className="card p-4 shadow-lg border-0 rounded-4 transition-transform hover:scale-105">
+                        <div className="d-flex justify-content-center align-items-center">
+                          <i className="bi bi-clipboard-data fs-3 text-info me-3"></i>
+                          <div>
+                            <h5 className="fw-bold display-5">{totalOrders}</h5>
+                            <p className="text-muted mb-0">Total Orders</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Top Categories */}
-                  <div className="card p-3">
-                    <h4 className="fw-bold mb-3">Top Categories</h4>
+                  <div className="card p-4 shadow-lg border-0 rounded-4">
+                    <h4 className="fw-bold mb-4 text-center text-primary">
+                      Top Categories
+                    </h4>
                     <ul className="list-group list-group-flush">
-                      <li className="list-group-item py-3">
-                        <div className="d-flex justify-content-between align-items-center">
-                          <p className="mb-0">Oil Filter</p>
-                          <p className="mb-0">1308</p>
-                        </div>
-                      </li>
-                      {/* Repeat the above list item for each category */}
+                      {storeDetails.categories.map((category, index) => (
+                        <li
+                          key={index}
+                          className="list-group-item py-3 d-flex justify-content-between align-items-center"
+                        >
+                          <p className="mb-0 fw-semibold">{category}</p>
+                          <span className="badge bg-info text-dark rounded-pill">
+                            Popular
+                          </span>
+                        </li>
+                      ))}
                     </ul>
                   </div>
                 </div>
               )}
 
               {activeSection === "product" && hasStore && (
-                <div>
+                <div className="p-4 bg-light rounded-3 shadow-sm">
                   <div className="row mb-5">
-                    <h1 className="fw-bold col">Product Management</h1>
+                    <h1 className="fw-bold display-4 col text-center text-primary">
+                      Product Management
+                    </h1>
                     <button
                       className="btn btn-primary rounded-4 m-2 col-2"
                       onClick={() => {
@@ -984,8 +994,8 @@ export default function SellerPanel() {
                     className="table-wrapper"
                     style={{ maxHeight: "500px", overflowY: "auto" }}
                   >
-                    <table className="table table-bordered">
-                      <thead className="table-header">
+                    <table className="table table-bordered table-striped table-hover">
+                      <thead className="table-header text-center bg-light">
                         <tr>
                           <th>Product Image</th>
                           <th>Product Name</th>
@@ -998,7 +1008,7 @@ export default function SellerPanel() {
                       <tbody className="table-body">
                         {products.map((product) => (
                           <tr
-                            className="fs-5 fw-medium text-center"
+                            className="fs-5 fw-medium text-center hover-bg-light"
                             key={product._id}
                           >
                             <td>
@@ -1011,12 +1021,12 @@ export default function SellerPanel() {
                             <td className="align-middle">{product.name}</td>
                             <td className="align-middle">{product.type}</td>
                             <td className="align-middle">
-                              {product.price}&#8377;
+                              &#8377;{product.price}
                             </td>
                             <td className="align-middle">{product.quantity}</td>
                             <td className="align-middle">
                               <button
-                                className="btn btn-sm btn-warning"
+                                className="btn btn-sm btn-warning rounded-3 transition-transform hover:scale-105"
                                 onClick={() => {
                                   handleEditProduct(product._id);
                                 }}
@@ -1024,7 +1034,7 @@ export default function SellerPanel() {
                                 Edit
                               </button>
                               <button
-                                className="btn btn-sm btn-danger ms-2"
+                                className="btn btn-sm btn-danger ms-2 rounded-3 transition-transform hover:scale-105"
                                 onClick={() => {
                                   handleDeleteProduct(product._id);
                                 }}
@@ -1041,9 +1051,9 @@ export default function SellerPanel() {
                   {addproductmodal && (
                     <div className="modal show d-block" tabIndex="-1">
                       <div className="modal-dialog">
-                        <div className="modal-content">
+                        <div className="modal-content rounded-4 shadow-lg">
                           <div className="modal-header">
-                            <h5 className="modal-title">
+                            <h5 className="modal-title fw-bold">
                               {isEditing ? "Edit Product" : "Add Product"}
                             </h5>
                             <button
@@ -1054,105 +1064,83 @@ export default function SellerPanel() {
                           </div>
                           <div className="modal-body">
                             <form>
-                              <div className="form-group">
-                                <label htmlFor="name">Name:</label>
-                                <input
-                                  type="text"
-                                  className="form-control"
-                                  name="name"
-                                  id="name"
-                                  value={productdet.name}
-                                  onChange={handleProductInputChange}
-                                  placeholder="Product Name"
-                                />
-                              </div>
-                              <div className="form-group">
-                                <label htmlFor="prod_img">Product Image:</label>
-                                <input
-                                  type="file"
-                                  className="form-control"
-                                  id="image"
-                                  onChange={(e) =>
-                                    handleImageChange(e.target.files[0])
-                                  }
-                                  accept="image/*"
-                                />
-                              </div>
-                              <div className="form-group">
-                                <label htmlFor="price">Price:</label>
-                                <input
-                                  type="number"
-                                  className="form-control"
-                                  name="price"
-                                  id="price"
-                                  value={productdet.price}
-                                  onChange={handleProductInputChange}
-                                  placeholder="Product Price"
-                                />
-                              </div>
-                              <div className="form-group">
-                                <label htmlFor="description">
-                                  Description:
-                                </label>
-                                <input
-                                  type="text"
-                                  className="form-control"
-                                  name="description"
-                                  id="description"
-                                  value={productdet.description}
-                                  onChange={handleProductInputChange}
-                                  placeholder="Product Description"
-                                />
-                              </div>
-                              <div className="form-group">
-                                <label htmlFor="type">Type:</label>
-                                <input
-                                  type="text"
-                                  className="form-control"
-                                  name="type"
-                                  id="type"
-                                  value={productdet.type}
-                                  onChange={handleProductInputChange}
-                                  placeholder="Product Type"
-                                />
-                              </div>
-                              <div className="form-group">
-                                <label htmlFor="quantity">Quantity:</label>
-                                <input
-                                  type="number"
-                                  className="form-control"
-                                  name="quantity"
-                                  id="quantity"
-                                  value={productdet.quantity}
-                                  onChange={handleProductInputChange}
-                                  placeholder="Product Quantity"
-                                />
-                              </div>
-                              <div className="form-group">
-                                <label htmlFor="department">Department:</label>
-                                <input
-                                  type="text"
-                                  className="form-control"
-                                  name="department"
-                                  id="department"
-                                  value={productdet.department}
-                                  onChange={handleProductInputChange}
-                                  placeholder="Product Department"
-                                />
-                              </div>
+                              {[
+                                {
+                                  label: "Name",
+                                  id: "name",
+                                  type: "text",
+                                  value: productdet.name,
+                                },
+                                {
+                                  label: "Product Image",
+                                  id: "image",
+                                  type: "file",
+                                },
+                                {
+                                  label: "Price",
+                                  id: "price",
+                                  type: "number",
+                                  value: productdet.price,
+                                },
+                                {
+                                  label: "Description",
+                                  id: "description",
+                                  type: "text",
+                                  value: productdet.description,
+                                },
+                                {
+                                  label: "Type",
+                                  id: "type",
+                                  type: "text",
+                                  value: productdet.type,
+                                },
+                                {
+                                  label: "Quantity",
+                                  id: "quantity",
+                                  type: "number",
+                                  value: productdet.quantity,
+                                },
+                                {
+                                  label: "Department",
+                                  id: "department",
+                                  type: "text",
+                                  value: productdet.department,
+                                },
+                              ].map((field, index) => (
+                                <div className="form-group mb-3" key={index}>
+                                  <label
+                                    htmlFor={field.id}
+                                    className="fw-semibold"
+                                  >
+                                    {field.label}:
+                                  </label>
+                                  <input
+                                    type={field.type}
+                                    className="form-control"
+                                    name={field.id}
+                                    id={field.id}
+                                    value={field.value}
+                                    onChange={handleProductInputChange}
+                                    placeholder={`Enter ${field.label}`}
+                                    accept={
+                                      field.type === "file" ? "image/*" : ""
+                                    }
+                                  />
+                                </div>
+                              ))}
                             </form>
                           </div>
                           <div className="modal-footer">
                             <button
                               type="button"
-                              className="btn btn-secondary"
+                              className="btn btn-secondary rounded-4"
                               onClick={() => setAddProductModal(false)}
                             >
                               Close
                             </button>
                             <button
                               type="button"
-                              className="btn btn-primary"
+                              className="btn btn-primary rounded-4"
                               onClick={
                                 isEditing
                                   ? handleUpdateProduct
@@ -1170,18 +1158,25 @@ export default function SellerPanel() {
               )}
 
               {activeSection === "mystore" && hasStore && (
-                <div>
-                  <h1 className="fw-bold">My Store</h1>
-                  <div className="card p-3 mb-3">
-                    <h5>Store Name: {storeDetails.storeName}</h5>
-                    <h5>Location: {storeDetails.storeLocation}</h5>
+                <div className="container mb-4">
+                  <h1 className="fw-bold text-primary">My Store</h1>
+                  <div className="card p-3 mb-4 shadow-sm rounded-4">
+                    <h5 className="fw-semibold">
+                      Store Name: {storeDetails.storeName}
+                    </h5>
+                    <h5 className="fw-semibold">
+                      Location: {storeDetails.storeLocation}
+                    </h5>
                     <p>
-                      Store Description: A leading supplier of fresh fruits and
-                      vegetables.
+                      <strong>Store Description:</strong> A leading supplier of
+                      fresh fruits and vegetables.
                     </p>
-                    <p>Store Categories:{storeDetails.categories.join(",")}</p>
+                    <p>
+                      <strong>Store Categories:</strong>{" "}
+                      {storeDetails.categories.join(", ")}
+                    </p>
                     <button
-                      className="btn btn-secondary"
+                      className="btn btn-secondary rounded-4"
                       onClick={() => setShowModal(true)}
                     >
                       Edit Store Info
@@ -1191,7 +1186,7 @@ export default function SellerPanel() {
                   {showModal && (
                     <div className="modal show d-block" tabIndex="-1">
                       <div className="modal-dialog">
-                        <div className="modal-content">
+                        <div className="modal-content rounded-4 shadow-lg">
                           <div className="modal-header">
                             <h5 className="modal-title">Edit Store Info</h5>
                             <button
@@ -1216,6 +1211,7 @@ export default function SellerPanel() {
                                   name="storeName"
                                   value={storeDetails.storeName}
                                   onChange={handleStoreInputChange}
+                                  required
                                 />
                               </div>
                               <div className="mb-3">
@@ -1232,6 +1228,7 @@ export default function SellerPanel() {
                                   name="storeLocation"
                                   value={storeDetails.storeLocation}
                                   onChange={handleStoreInputChange}
+                                  required
                                 />
                               </div>
                               <div className="mb-3">
@@ -1258,14 +1255,15 @@ export default function SellerPanel() {
                                     Add
                                   </button>
                                 </div>
-                                <ul className="mt-2 d-flex">
+                                <ul className="mt-2 d-flex flex-wrap">
                                   {storeDetails.categories.map((cat, index) => (
                                     <li
-                                      className="me-2 badge bg-secondary"
+                                      className="me-2 badge bg-secondary text-light p-2"
                                       key={index}
                                     >
                                       {cat}{" "}
                                       <RxCross2
+                                        className="text-danger"
                                         onClick={() =>
                                           handleRemoveCategory(index)
                                         }
@@ -1301,264 +1299,277 @@ export default function SellerPanel() {
 
               {activeSection === "mystore" && !hasStore && (
                 <div className="container mb-4">
-                  <div className="row main-content">
-                    <h1 className="fw-bold">Create Your Store</h1>
-                    <form onSubmit={handleStoreCreationSubmit}>
-                      <div className="mb-3">
-                        <label htmlFor="storeName" className="form-label">
-                          Store Name
-                        </label>
+                  <h1 className="fw-bold text-primary">Create Your Store</h1>
+                  <form
+                    onSubmit={handleStoreCreationSubmit}
+                    className="card p-3 rounded-4 shadow-sm"
+                  >
+                    <div className="mb-3">
+                      <label htmlFor="storeName" className="form-label">
+                        Store Name
+                      </label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        id="storeName"
+                        name="storeName"
+                        value={storeDetails.storeName}
+                        onChange={handleStoreInputChange}
+                        required
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label htmlFor="storeLocation" className="form-label">
+                        Store Location
+                      </label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        id="storeLocation"
+                        name="storeLocation"
+                        value={storeDetails.storeLocation}
+                        onChange={handleStoreInputChange}
+                        required
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label htmlFor="deliveryOptions" className="form-label">
+                        Delivery Options
+                      </label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        id="deliveryOptions"
+                        name="deliveryOptions"
+                        value={storeDetails.deliveryOptions}
+                        onChange={handleStoreInputChange}
+                        required
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label htmlFor="proximity" className="form-label">
+                        Proximity
+                      </label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        id="proximity"
+                        name="proximity"
+                        value={storeDetails.proximity}
+                        onChange={handleStoreInputChange}
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label htmlFor="categories" className="form-label">
+                        Categories
+                      </label>
+                      <div className="input-group">
                         <input
                           type="text"
                           className="form-control"
-                          id="storeName"
-                          name="storeName"
-                          value={storeDetails.storeName}
-                          onChange={handleStoreInputChange}
-                          required
+                          id="categories"
+                          name="categories"
+                          value={category}
+                          onChange={handleCategoryInputChange}
                         />
-                      </div>
-                      <div className="mb-3">
-                        <label htmlFor="storeLocation" className="form-label">
-                          Store Location
-                        </label>
-                        <input
-                          type="text"
-                          className="form-control"
-                          id="storeLocation"
-                          name="storeLocation"
-                          value={storeDetails.storeLocation}
-                          onChange={handleStoreInputChange}
-                          required
-                        />
-                      </div>
-                      <div className="mb-3">
-                        <label htmlFor="deliveryOptions" className="form-label">
-                          Delivery Options
-                        </label>
-                        <input
-                          type="text"
-                          className="form-control"
-                          id="deliveryOptions"
-                          name="deliveryOptions"
-                          value={storeDetails.deliveryOptions}
-                          onChange={handleStoreInputChange}
-                          required
-                        />
-                      </div>
-                      <div className="mb-3">
-                        <label htmlFor="proximity" className="form-label">
-                          Proximity
-                        </label>
-                        <input
-                          type="text"
-                          className="form-control"
-                          id="proximity"
-                          name="proximity"
-                          value={storeDetails.proximity}
-                          onChange={handleStoreInputChange}
-                        />
-                      </div>
-                      <div className="mb-3">
-                        <label htmlFor="categories" className="form-label">
-                          Categories
-                        </label>
-                        <div className="input-group">
-                          <input
-                            type="text"
-                            className="form-control"
-                            id="categories"
-                            name="categories"
-                            value={category}
-                            onChange={handleCategoryInputChange}
-                          />
-                          <button
-                            type="button"
-                            className="btn btn-primary"
-                            onClick={handleAddCategory}
-                          >
-                            Add
-                          </button>
-                        </div>
-                        <ul className="mt-2 d-flex">
-                          {storeDetails.categories.map((cat, index) => (
-                            <li className="me-2 badge bg-secondary" key={index}>
-                              {cat}{" "}
-                              <RxCross2
-                                onClick={() => handleRemoveCategory(index)}
-                              />
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div className="mb-3">
-                        <label className="form-label">Delivery Slots</label>
-                        {storeDetails.deliverySlots.map((slot, index) => (
-                          <div key={index} className="mb-3 row">
-                            <input
-                              type="text"
-                              className="form-control mb-2 col"
-                              placeholder="Label"
-                              value={slot.label}
-                              onChange={(e) =>
-                                handleSlotChange(index, "label", e.target.value)
-                              }
-                            />
-                            <input
-                              type="number"
-                              className="form-control mb-2 col"
-                              placeholder="Cost"
-                              value={slot.cost}
-                              onChange={(e) =>
-                                handleSlotChange(index, "cost", e.target.value)
-                              }
-                            />
-                            <select
-                              className="form-select mb-2 col"
-                              value={slot.type}
-                              onChange={(e) =>
-                                handleSlotChange(index, "type", e.target.value)
-                              }
-                            >
-                              <option value="Paid">Paid</option>
-                              <option value="Free">Free</option>
-                            </select>
-                            <button
-                              type="button"
-                              className="btn btn-danger"
-                              onClick={() => handleRemoveSlot(index)}
-                            >
-                              Remove Slot
-                            </button>
-                          </div>
-                        ))}
                         <button
                           type="button"
                           className="btn btn-primary"
-                          onClick={handleAddSlot}
+                          onClick={handleAddCategory}
                         >
-                          Add Slot
+                          Add
                         </button>
                       </div>
-                      <div className="mb-3 form-check">
-                        <input
-                          type="checkbox"
-                          className="form-check-input"
-                          id="pickupAvailable"
-                          name="pickupAvailable"
-                          checked={storeDetails.pickupAvailable}
-                          onChange={(e) =>
-                            setStoreDetails((prev) => ({
-                              ...prev,
-                              pickupAvailable: e.target.checked,
-                            }))
-                          }
-                        />
-                        <label
-                          className="form-check-label"
-                          htmlFor="pickupAvailable"
-                        >
-                          Pickup Available
-                        </label>
-                      </div>
-                      <button type="submit" className="btn btn-primary">
-                        Create Store
+                      <ul className="mt-2 d-flex flex-wrap">
+                        {storeDetails.categories.map((cat, index) => (
+                          <li
+                            className="me-2 badge bg-secondary text-light p-2"
+                            key={index}
+                          >
+                            {cat}{" "}
+                            <RxCross2
+                              className="text-danger"
+                              onClick={() => handleRemoveCategory(index)}
+                            />
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label">Delivery Slots</label>
+                      {storeDetails.deliverySlots.map((slot, index) => (
+                        <div key={index} className="mb-3 row">
+                          <input
+                            type="text"
+                            className="form-control mb-2 col"
+                            placeholder="Label"
+                            value={slot.label}
+                            onChange={(e) =>
+                              handleSlotChange(index, "label", e.target.value)
+                            }
+                          />
+                          <input
+                            type="number"
+                            className="form-control mb-2 col"
+                            placeholder="Cost"
+                            value={slot.cost}
+                            onChange={(e) =>
+                              handleSlotChange(index, "cost", e.target.value)
+                            }
+                          />
+                          <select
+                            className="form-select mb-2 col"
+                            value={slot.type}
+                            onChange={(e) =>
+                              handleSlotChange(index, "type", e.target.value)
+                            }
+                          >
+                            <option value="Paid">Paid</option>
+                            <option value="Free">Free</option>
+                          </select>
+                          <button
+                            type="button"
+                            className="btn btn-danger"
+                            onClick={() => handleRemoveSlot(index)}
+                          >
+                            Remove Slot
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        className="btn btn-primary"
+                        onClick={handleAddSlot}
+                      >
+                        Add Slot
                       </button>
-                    </form>
-                  </div>
+                    </div>
+                    <div className="mb-3 form-check">
+                      <input
+                        type="checkbox"
+                        className="form-check-input"
+                        id="pickupAvailable"
+                        name="pickupAvailable"
+                        checked={storeDetails.pickupAvailable}
+                        onChange={(e) =>
+                          setStoreDetails((prev) => ({
+                            ...prev,
+                            pickupAvailable: e.target.checked,
+                          }))
+                        }
+                      />
+                      <label
+                        className="form-check-label"
+                        htmlFor="pickupAvailable"
+                      >
+                        Pickup Available
+                      </label>
+                    </div>
+                    <button type="submit" className="btn btn-primary rounded-4">
+                      Create Store
+                    </button>
+                  </form>
                 </div>
               )}
-
               {activeSection === "orders" && hasStore && (
-                <div>
-                  <h1 className="fw-bold">Orders</h1>
-                  
+                <div className="container mb-4">
+                  <h1 className="fw-bold text-primary">Orders</h1>
 
                   <h4 className="mt-4">Order Details</h4>
-                  <table className="table table-bordered">
-                    <thead>
-                      <tr>
-                        <th>Order ID</th>
-                        <th>Customer Name</th>
-                        <th>Order Date</th>
-                        <th>Total Amount</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {orders.map((order) =>
-                        order.products.map((product) => (
-                          <tr className="align-middle" key={product.productId}>
-                            <td>{order.orderId}</td>
-                            <td>{order.buyer?.customerName}</td>
-                            <td>{order.orderDate}</td>
-                            <td>{product.productPrice}&#8377;</td>
-                            <td
-                              className={`badge ${
-                                product.status === "pending"
-                                  ? "bg-warning text-black"
-                                  : product.status === "delivering"
-                                  ? "bg-info text-white"
-                                  : "bg-success text-white"
-                              } ms-3 mt-2`}
+                  <div
+                    className="table-wrapper"
+                    style={{ maxHeight: "470px", overflowY: "auto" }}
+                  >
+                    <table className="table table-bordered table-hover">
+                      <thead className="table-primary">
+                        <tr>
+                          <th>Order ID</th>
+                          <th>Customer Name</th>
+                          <th>Order Date</th>
+                          <th>Total Amount</th>
+                          <th>Status</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {orders.map((order) =>
+                          order.products.map((product) => (
+                            <tr
+                              className="align-middle"
+                              key={product.productId}
                             >
-                              {product.status}
-                            </td>
-                            <td>
-                              <button
-                                className="btn btn-sm btn-info"
-                                onClick={() =>{
-                                  fetchOrderDetails(order.orderId)
-                                  handlePrint()
-                                  }
-                                }
-                              >
-                                View Details
-                              </button>
-                              <div className="btn-group ms-2">
-                                <button
-                                  type="button"
-                                  className="btn btn-sm btn-success dropdown-toggle"
-                                  data-bs-toggle="dropdown"
-                                  aria-expanded="false"
+                              <td>{order.orderId}</td>
+                              <td>{order.buyer?.customerName}</td>
+                              <td>{order.orderDate}</td>
+                              <td>{product.productPrice}&#8377;</td>
+                              <td>
+                                <span
+                                  className={`badge ${
+                                    product.status === "pending"
+                                      ? "bg-warning text-dark"
+                                      : product.status === "delivering"
+                                      ? "bg-info text-white"
+                                      : "bg-success text-white"
+                                  }`}
                                 >
-                                  Change Status
+                                  {product.status.charAt(0).toUpperCase() +
+                                    product.status.slice(1)}
+                                </span>
+                              </td>
+                              <td>
+                                <button
+                                  className="btn btn-sm btn-info"
+                                  onClick={() => {
+                                    fetchOrderDetails(order.orderId);
+                                    handlePrint();
+                                  }}
+                                >
+                                  View Details
                                 </button>
-                                <ul className="dropdown-menu">
-                                  {["pending", "delivering", "completed"].map(
-                                    (status) => (
-                                      <li key={status}>
-                                        <button
-                                          className="dropdown-item"
-                                          onClick={() =>
-                                            handleStatusChange(
-                                              order.orderId,
-                                              product.productId,
-                                              status
-                                            )
-                                          }
-                                        >
-                                          {status.charAt(0).toUpperCase() +
-                                            status.slice(1)}
-                                        </button>
-                                      </li>
-                                    )
-                                  )}
-                                </ul>
-                              </div>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
+                                <div className="btn-group ms-2">
+                                  <button
+                                    type="button"
+                                    className="btn btn-sm btn-success dropdown-toggle"
+                                    data-bs-toggle="dropdown"
+                                    aria-expanded="false"
+                                  >
+                                    Change Status
+                                  </button>
+                                  <ul className="dropdown-menu">
+                                    {["pending", "delivering", "completed"].map(
+                                      (status) => (
+                                        <li key={status}>
+                                          <button
+                                            className="dropdown-item"
+                                            onClick={() =>
+                                              handleStatusChange(
+                                                order.orderId,
+                                                product.productId,
+                                                status
+                                              )
+                                            }
+                                          >
+                                            {status.charAt(0).toUpperCase() +
+                                              status.slice(1)}
+                                          </button>
+                                        </li>
+                                      )
+                                    )}
+                                  </ul>
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
 
                   {/* Order Details Modal */}
                   {viewDetailsModal && viewDetails && (
                     <div className="modal show d-block" tabIndex="-1">
                       <div className="modal-dialog modal-lg">
-                        <div className="modal-content">
+                        <div className="modal-content rounded-4 shadow-lg">
                           <div className="modal-header">
                             <h5 className="modal-title">
                               Invoice #{viewDetails.orderId}
@@ -1570,6 +1581,30 @@ export default function SellerPanel() {
                             ></button>
                           </div>
                           <div className="modal-body">
+                            {/* Populate order details here */}
+                            <p>
+                              <strong>Customer Name:</strong>{" "}
+                              {viewDetails.buyer?.customerName}
+                            </p>
+                            <p>
+                              <strong>Order Date:</strong>{" "}
+                              {viewDetails.orderDate}
+                            </p>
+                            <p>
+                              <strong>Items:</strong>
+                            </p>
+                            <ul>
+                              {viewDetails.products.map((item) => (
+                                <li key={item.productId}>
+                                  {item.productName} - {item.productPrice}
+                                  &#8377;
+                                </li>
+                              ))}
+                            </ul>
+                            <p>
+                              <strong>Total Amount:</strong>{" "}
+                              {viewDetails.totalAmount}&#8377;
+                            </p>
                           </div>
                           <div className="modal-footer">
                             <button
@@ -1736,20 +1771,6 @@ export default function SellerPanel() {
                               </form>
                             </div>
                             <hr className="my-10" />
-                            <div>
-                              <h5 className="mb-4">Delete Account</h5>
-                              <p className="mb-4">
-                                Permanently delete your account and all of your
-                                content. This action is not reversible.
-                              </p>
-                              <button
-                                type="button"
-                                className="btn btn-outline-danger"
-                                onClick={handleDeleteAccount}
-                              >
-                                Delete Account
-                              </button>
-                            </div>
                           </div>
                         )}
                       </div>

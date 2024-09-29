@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import ScrollToTop from "../ScrollToTop";
 import { toast } from "react-toastify";
 import { loginUser } from "../../api";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 const MyAccountSignIn = () => {
   const [formData, setFormData] = useState({
@@ -11,6 +12,7 @@ const MyAccountSignIn = () => {
     password: "",
   });
   const navigate = useNavigate();
+  const [hide, setHide] = useState(true);
 
   const handleChange = (e) => {
     setFormData({
@@ -72,15 +74,28 @@ const MyAccountSignIn = () => {
                     />
                   </div>
                   <div className="col-12">
-                    <input
-                      type="password"
-                      className="form-control"
-                      id="password"
-                      value={formData.password}
-                      onChange={handleChange}
-                      placeholder="Password"
-                      required
-                    />
+                    <div className="input-group">
+                      <input
+                        type={hide ? "password" : "text"}
+                        className="form-control"
+                        id="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        placeholder="Password"
+                        required
+                      />
+                      <button
+                        type="button"
+                        className="btn border text-center"
+                        onClick={() => setHide(!hide)}
+                      >
+                        {hide ? (
+                          <FaEye className="bg-white mb-1" />
+                        ) : (
+                          <FaEyeSlash className="bg-white mb-1" />
+                        )}
+                      </button>
+                    </div>
                   </div>
                   <div className="d-flex justify-content-between">
                     <div className="form-check">

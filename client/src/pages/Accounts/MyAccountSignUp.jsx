@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import ScrollToTop from "../ScrollToTop";
 import { toast } from "react-toastify";
 import { registerUser } from "../../api";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 const MyAccountSignUp = () => {
   const [formData, setFormData] = useState({
@@ -13,7 +14,7 @@ const MyAccountSignUp = () => {
     phone: "",
     password: "",
   });
-
+  const [hide, setHide] = useState(true);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -114,15 +115,28 @@ const MyAccountSignUp = () => {
                     />
                   </div>
                   <div className="col-12">
-                    <input
-                      type="text"
-                      className="form-control"
-                      id="password"
-                      placeholder="Password"
-                      value={formData.password}
-                      onChange={handleChange}
-                      required
-                    />
+                    <div className="input-group">
+                      <input
+                        type={hide ? "password" : "text"}
+                        className="form-control"
+                        id="password"
+                        placeholder="Password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        required
+                      />
+                      <button
+                        type="button"
+                        className="btn border text-center"
+                        onClick={() => setHide(!hide)}
+                      >
+                        {hide ? (
+                          <FaEye className="bg-white mb-1" />
+                        ) : (
+                          <FaEyeSlash className="bg-white mb-1" />
+                        )}
+                      </button>
+                    </div>
                   </div>
                   <div className="col-12 d-grid">
                     <button type="submit" className="btn btn-primary">
@@ -133,13 +147,6 @@ const MyAccountSignUp = () => {
                       <Link to="/MyAccountSignIn">Sign in</Link>
                     </span>
                   </div>
-                  <p>
-                    <small>
-                      By continuing, you agree to our{" "}
-                      <Link to="#!">Terms of Service</Link> &amp;{" "}
-                      <Link to="#!">Privacy Policy</Link>
-                    </small>
-                  </p>
                 </div>
               </form>
             </div>

@@ -2,12 +2,11 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { MagnifyingGlass } from "react-loader-spinner";
 import ScrollToTop from "../ScrollToTop";
-import axios from "axios";
 import { loadStripe } from "@stripe/stripe-js";
 import { toast } from "react-toastify";
+import { getCart, getUserAddress, getUserToken, placeOrder } from "../../api";
 
 const ShopCheckOut = () => {
-  // loading
   const [loaderStatus, setLoaderStatus] = useState(true);
   useEffect(() => {
     setTimeout(() => {
@@ -17,93 +16,88 @@ const ShopCheckOut = () => {
 
   const navigate = useNavigate();
 
+  // State for cart, total amount, address, and selected address
   const [cart, setCart] = useState([]);
   const [totalAmount, setTotalAmount] = useState(0);
   const [address, setAddress] = useState([]);
   const [selectedAddress, setSelectedAddress] = useState({});
   const [deliveryOption, setDeliveryOption] = useState({});
+  const [paymentMethod, setPaymentMethod] = useState("COD");
+
+  // Load Stripe instance
   const stripePromise = loadStripe(
     "pk_test_51PzviN1hYkTOanlJ06wAVKwng1q0bo8dIIbC7uv8uBrlE858KeRSral4BQ5a16V0CVvXPkSNTnVKNwcXgStZGMhT00G38wq4Ja"
   );
 
+  // Fetch user's cart
   useEffect(() => {
     const fetchCart = async () => {
-      const userData = JSON.parse(localStorage.getItem("userData"));
-      const res = await axios.get("http://localhost:5000/api/order/cart", {
-        headers: {
-          Authorization: `Bearer ${userData.token}`,
-        },
-      });
-      if (res.data) {
-        setCart(res.data.cart);
-        setTotalAmount(res.data.totalAmount);
+      try {
+        const token = getUserToken();
+        const cartData = await getCart(token);
+        setCart(cartData.cart);
+        setTotalAmount(cartData.totalAmount);
+      } catch (error) {
+        console.error("Failed to fetch cart:", error);
       }
     };
     fetchCart();
   }, []);
 
+  // Fetch user's address
   useEffect(() => {
     const fetchUserAddress = async () => {
-      const userData = JSON.parse(localStorage.getItem("userData"));
-      const res = await axios.get(
-        `http://localhost:5000/api/auth/user/${userData.userId}`
-      );
-      if (res.data) {
-        setAddress(res.data.address);
+      try {
+        const userData=JSON.parse(localStorage.getItem("userData"));
+        const userDataResponse = await getUserAddress(userData.userId);
+        setAddress(userDataResponse.address);
+      } catch (error) {
+        console.error("Failed to fetch user address:", error);
       }
     };
     fetchUserAddress();
   }, []);
 
-  const [paymentMethod, setPaymentMethod] = useState("COD");
-
-  const placeOrder = async () => {
+  // Function to place order
+  const handlePlaceOrder = async () => {
     if (!selectedAddress._id || !deliveryOption) {
       toast.info("Please select an address and delivery option.");
       return;
     }
-  
+
     try {
-      const userData = JSON.parse(localStorage.getItem("userData"));
-      const response = await axios.post(
-        "http://localhost:5000/api/order",
-        {
-          items: cart.map((item) => ({
-            productId: item.productId,
-            quantity: item.quantity,
-          })),
-          deliveryOption,
-          paymentMethod,
-          deliveryAddress: {
-            street: selectedAddress.street,
-            city: selectedAddress.city,
-            postalCode: selectedAddress.zip,
-            country: selectedAddress.country,
-          },
+      const token=getUserToken();
+      const orderData = {
+        items: cart.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+        })),
+        deliveryOption,
+        paymentMethod,
+        deliveryAddress: {
+          street: selectedAddress.street,
+          city: selectedAddress.city,
+          postalCode: selectedAddress.zip,
+          country: selectedAddress.country,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${userData.token}`,
-          },
-        }
-      );
-  
-      if (response.data.success) {
+      };
+
+      const response = await placeOrder(orderData, token);
+
+      if (response.success) {
         if (paymentMethod === "Stripe") {
-          window.location.href = response.data.session_url;
+          window.location.href = response.session_url;
         } else {
-          toast.success(response.data.message);
+          toast.success(response.message);
           navigate("/MyAccountOrder");
         }
       } else {
-        toast.success(response.data.message);
+        toast.error(response.message);
       }
     } catch (error) {
-      console.error("Error placing order:", error.response);
       toast.error("An error occurred while placing the order.");
     }
   };
-  
   return (
     <div>
       {loaderStatus ? (
@@ -320,41 +314,41 @@ const ShopCheckOut = () => {
                         data-bs-parent="#accordionFlushExample"
                       >
                         <div className="mt-4">
-                      <div className="form-check">
-                        <input
-                          type="radio"
-                          id="paymentCOD"
-                          name="paymentMethod"
-                          value="COD"
-                          checked={paymentMethod === "COD"}
-                          onChange={(e) => setPaymentMethod(e.target.value)}
-                          className="form-check-input"
-                        />
-                        <label
-                          htmlFor="paymentCOD"
-                          className="form-check-label"
-                        >
-                          Cash on Delivery (COD)
-                        </label>
-                      </div>
-                      <div className="form-check">
-                        <input
-                          type="radio"
-                          id="paymentStripe"
-                          name="paymentMethod"
-                          value="Stripe"
-                          checked={paymentMethod === "Stripe"}
-                          onChange={(e) => setPaymentMethod(e.target.value)}
-                          className="form-check-input"
-                        />
-                        <label
-                          htmlFor="paymentStripe"
-                          className="form-check-label"
-                        >
-                          Credit/Debit Card
-                        </label>
-                      </div>
-                    </div>
+                          <div className="form-check">
+                            <input
+                              type="radio"
+                              id="paymentCOD"
+                              name="paymentMethod"
+                              value="COD"
+                              checked={paymentMethod === "COD"}
+                              onChange={(e) => setPaymentMethod(e.target.value)}
+                              className="form-check-input"
+                            />
+                            <label
+                              htmlFor="paymentCOD"
+                              className="form-check-label"
+                            >
+                              Cash on Delivery (COD)
+                            </label>
+                          </div>
+                          <div className="form-check">
+                            <input
+                              type="radio"
+                              id="paymentStripe"
+                              name="paymentMethod"
+                              value="Stripe"
+                              checked={paymentMethod === "Stripe"}
+                              onChange={(e) => setPaymentMethod(e.target.value)}
+                              className="form-check-input"
+                            />
+                            <label
+                              htmlFor="paymentStripe"
+                              className="form-check-label"
+                            >
+                              Credit/Debit Card
+                            </label>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -444,7 +438,7 @@ const ShopCheckOut = () => {
 
                     <button
                       className="btn btn-primary mt-4 w-100"
-                      onClick={placeOrder}
+                      onClick={handlePlaceOrder}
                     >
                       Place Order
                     </button>

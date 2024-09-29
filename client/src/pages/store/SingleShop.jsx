@@ -1,93 +1,84 @@
 import React, { useEffect, useState } from "react";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import { Link, useParams } from "react-router-dom";
-
 import graphics from "../../images/store-graphics.svg";
 import { MagnifyingGlass } from "react-loader-spinner";
 import ScrollToTop from "../ScrollToTop";
-import axios from "axios";
 import { toast } from "react-toastify";
+import { addToCart, fetchCategoryProducts, fetchStoreDetails } from "../../api";
 const SingleShop = () => {
-  // loading
   const [loaderStatus, setLoaderStatus] = useState(true);
+  const [storeDet, setStoreDet] = useState({});
+  const [products, setProducts] = useState([]);
+  const [sortproducts, setSortproducts] = useState("Featured");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [productsPerPage] = useState(12);
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [searchterm, setSearchTerm] = useState("");
+  const { id } = useParams();
+
   useEffect(() => {
     setTimeout(() => {
       setLoaderStatus(false);
     }, 1500);
   }, []);
-  const [storeDet, setStoreDet] = useState({});
-  const [products, setProducts] = useState([]);
-  const [sortproducts, setSortproducts] = useState("Featured");
-  const [selectedcategory, setSelectedcategory] = useState("");
-  const [totalProducts, setTotalProducts] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [productsPerPage] = useState(12);
-  const [filteredProducts, setFilteredProducts] = useState([]);
-  const { id } = useParams();
-  const handleCategoryClick = (category) => {
-    setSelectedcategory(category);
-    setCurrentPage(1);
-  };
-
 
   useEffect(() => {
-    if (selectedcategory) {
-      const fetchCategoryProducts = async () => {
-        try {
-          const userData = JSON.parse(localStorage.getItem("userData"));
-          const storeId = id; // storeId from the URL
+    const userData = JSON.parse(localStorage.getItem("userData"));
+    const token = userData.token;
 
-          const res = await axios.get(
-            `http://localhost:5000/api/product/inventory/prod/${storeId}/${selectedcategory}`,
-            {
-              headers: {
-                Authorization: `Bearer ${userData.token}`,
-              },
-            }
-          );
-          setProducts(res.data.products); // Store products
-          setFilteredProducts(res.data.products);
-        } catch (error) {
-          console.error("Error fetching products:", error.message);
-          alert("Failed to fetch products");
-        }
-      };
-      fetchCategoryProducts();
-    }
-  }, [selectedcategory, id]);
-
-  // Fetch store details
-  useEffect(() => {
+    // Fetch store details
     const fetchStore = async () => {
       try {
-        const userData = JSON.parse(localStorage.getItem("userData"));
-        const response = await axios.get(
-          `http://localhost:5000/api/store/${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${userData.token}`,
-            },
-          }
-        );
-
-        if (!response.data) {
-          console.log("Store not found");
-          alert("Store not found");
-          return;
-        }
-
-        setStoreDet(response.data.data); // Store store details
-        setProducts(response.data.products);
-        setFilteredProducts(response.data.products);
-        setTotalProducts(response.data.totalProducts);
+        const storeData = await fetchStoreDetails(id, token);
+        setStoreDet(storeData.data);
+        setProducts(storeData.products);
+        setFilteredProducts(storeData.products);
+        setTotalProducts(storeData.totalProducts);
       } catch (error) {
-        console.log("Error fetching store: ", error.message);
+        console.error("Error fetching store: ", error.message);
         alert("Failed to fetch data");
       }
     };
     fetchStore();
   }, [id]);
 
+  useEffect(() => {
+    if (selectedCategory) {
+      const fetchCategoryProductsData = async () => {
+        try {
+          const userData = JSON.parse(localStorage.getItem("userData"));
+          const token = userData.token;
+
+          const res = await fetchCategoryProducts(id, selectedCategory, token);
+          setProducts(res.products);
+          setFilteredProducts(res.products);
+        } catch (error) {
+          console.error("Error fetching products:", error.message);
+          alert("Failed to fetch products");
+        }
+      };
+      fetchCategoryProductsData();
+    }
+  }, [selectedCategory, id]);
+
+  const handleAddToCart = async (productId) => {
+    try {
+      const userData = JSON.parse(localStorage.getItem("userData"));
+      const token = userData.token;
+
+      const response = await addToCart(productId, token);
+      toast.success(response.message);
+    } catch (error) {
+      console.log("Error while adding to cart:", error.message);
+    }
+  };
+  const handleCategoryClick = (category) => {
+    setSelectedCategory(category);
+    setCurrentPage(1);
+  };
   const [viewMode, setViewMode] = useState("grid");
   const handleViewChange = (view) => {
     setViewMode(view);
@@ -113,33 +104,6 @@ const SingleShop = () => {
     setProducts(sorted); // Update the sorted products in the state
   };
 
-  const handleaddtocart = async (productId) => {
-    try {
-      console.log(productId);
-
-      const userData = JSON.parse(localStorage.getItem("userData"));
-      const response = await axios.post(
-        "http://localhost:5000/api/order/cart/add",
-        {
-          productId,
-          quantity: 1,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${userData.token}`,
-          },
-        }
-      );
-      toast.success(response.data.message);
-      console.log(response.data);
-    } catch (error) {
-      console.log("error while adding to cart:", error);
-    }
-  };
-
-  const [searchterm, setSearchTerm] = useState("");
-  console.log("Search Term:", searchterm);
-
   const handleSearch = (e) => {
     const term = e.target.value.toLowerCase();
     setSearchTerm(term);
@@ -156,18 +120,16 @@ const SingleShop = () => {
       setFilteredProducts(results);
     } else {
       console.log("doesnt work");
-      
-      setFilteredProducts(products); // Reset to all products if search term is empty
+
+      setFilteredProducts(products);
     }
   };
 
-
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
-  const currentProducts = products.slice(
-    indexOfFirstProduct,
-    indexOfLastProduct
-  );
+  const currentProducts = searchterm
+    ? filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct) // When searching
+    : products.slice(indexOfFirstProduct, indexOfLastProduct);
   // Change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
@@ -308,7 +270,10 @@ const SingleShop = () => {
                       <div className="d-md-flex justify-content-between mb-3 align-items-center">
                         <div>
                           <p className="mb-3 mb-md-0">
-                            {totalProducts} Products found
+                            {filteredProducts.length > 0
+                              ? filteredProducts.length
+                              : totalProducts}{" "}
+                            Products found
                           </p>
                         </div>
                         <div className="d-flex justify-content-md-between align-items-center">
@@ -444,7 +409,7 @@ const SingleShop = () => {
                                     <button
                                       className="btn btn-primary btn-sm"
                                       onClick={() =>
-                                        handleaddtocart(product._id)
+                                        handleAddToCart(product._id)
                                       }
                                     >
                                       <i className="feather feather-plus"></i>{" "}

@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import "./PaymentStatus.css"; // Import a CSS file for styling
+import "./PaymentStatus.css";
 
 const PaymentSuccess = () => {
   const navigate = useNavigate();

@@ -19,7 +19,7 @@ const router = express.Router();
 router
   .route("/")
   .post(protect, authorize("seller"), addProduct)
-  .get(protect, authorize("customer"), getAllProducts);
+  .get( getAllProducts);
 router.get(
   "/departmentsandtypes",
   protect,

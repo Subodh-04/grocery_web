@@ -6,7 +6,7 @@ import productimage3 from "../images/product-img-3.jpg";
 import productimage4 from "../images/product-img-4.jpg";
 import productimage5 from "../images/product-img-5.jpg";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
+import { fetchDepartments } from "../api";
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -19,30 +19,18 @@ const Header = () => {
   };
 
   useEffect(() => {
-    const fetchDepartments = async () => {
-      try {
-        const userData = JSON.parse(localStorage.getItem("userData"));
-        const res = await axios.get("http://localhost:5000/api/product/departments", {
-          headers: {
-            Authorization: `Bearer ${userData.token}`,
-          },
-        });
-
-        if (res.data.success) {
-          // Extract the departments from the response
-          setDepartments(res.data.departments);
-        }
-      } catch (error) {
-        console.log("Error while fetching departments:", error);
-      }
+    const loadDepartments = async () => {
+      const departmentsData = await fetchDepartments();
+      setDepartments(departmentsData);
     };
-    fetchDepartments();
+    loadDepartments();
   }, []);
 
   const handleDepartmentClick = (department) => {
     setClickedDepartment(department);
     navigate(`/Shop/${department}`);
   };
+
 
   return (
     <div>
@@ -275,12 +263,6 @@ const Header = () => {
                       </Link>
                       <Link className="dropdown-item" to="/MyAccountAddress">
                         Address
-                      </Link>
-                      <Link
-                        className="dropdown-item"
-                        to="/MyAccountPaymentMethod"
-                      >
-                        Payment Method
                       </Link>
                       <Link
                         className="dropdown-item"

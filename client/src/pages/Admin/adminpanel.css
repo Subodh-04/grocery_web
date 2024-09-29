@@ -1,61 +1,64 @@
 .custom-card {
-    border: none;
-    border-radius: 10px;
-    overflow: hidden;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-  }
-  
-  .custom-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-  }
-  
-  .card-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 60px;
-    height: 60px;
-    font-size: 2rem;
-    background: linear-gradient(135deg, rgba(255,255,255,0.3), rgba(0,0,0,0.1));
-  }
-  
-  .card-title {
-    font-size: 1rem;
-    color: #6c757d;
-  }
-  
-  .card-footer {
-    font-size: 2rem;
-    font-weight: bold;
-    margin: 0;
-  }
-  
-  .text-primary {
-    color: #007bff !important;
-  }
-  
-  .text-secondary {
-    color: #6c757d !important;
-  }
-  
-  .text-success {
-    color: #28a745 !important;
-  }
-  
-  .text-info {
-    color: #17a2b8 !important;
-  }
-  
-  .text-danger {
-    color: #dc3545 !important;
-  }
-  
-  .pe-2 {
-    padding-right: 0.5rem !important;
-  }
-  
-  .ps-2 {
-    padding-left: 0.5rem !important;
-  }
-  
+  border: none;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.custom-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  font-size: 2rem;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.3),
+    rgba(0, 0, 0, 0.1)
+  );
+}
+
+.card-title {
+  font-size: 1rem;
+  color: #6c757d;
+}
+
+.card-footer {
+  font-size: 2rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+.text-primary {
+  color: #007bff !important;
+}
+
+.text-secondary {
+  color: #6c757d !important;
+}
+
+.text-success {
+  color: #28a745 !important;
+}
+
+.text-info {
+  color: #17a2b8 !important;
+}
+
+.text-danger {
+  color: #dc3545 !important;
+}
+
+.pe-2 {
+  padding-right: 0.5rem !important;
+}
+
+.ps-2 {
+  padding-left: 0.5rem !important;
+}

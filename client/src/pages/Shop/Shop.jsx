@@ -4,7 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import ScrollToTop from "../ScrollToTop";
 import { toast } from "react-toastify";
-import { addToCart, fetchDepartmentsAndTypes, fetchProductsByDepartment, fetchProductsByType } from "../../api";
+import { addToCart, fetchDepartmentsAndTypes, fetchProductsByDepartment, fetchProductsByType, getUserToken } from "../../api";
 
 function Dropdown() {
   const [loaderStatus, setLoaderStatus] = useState(true);
@@ -20,8 +20,8 @@ function Dropdown() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const userData = JSON.parse(localStorage.getItem("userData"));
-        const fetchedProducts = await fetchProductsByDepartment(department, userData.token);
+        const token=getUserToken();
+        const fetchedProducts = await fetchProductsByDepartment(department, token);
         setProducts(fetchedProducts);
         setCurrentPage(1);
       } catch (error) {
@@ -35,8 +35,8 @@ function Dropdown() {
   useEffect(() => {
     const getprod = async () => {
       try {
-        const userData = JSON.parse(localStorage.getItem("userData"));
-        const fetchedProducts = await fetchProductsByType(department, type, userData.token);
+        const token=getUserToken();
+        const fetchedProducts = await fetchProductsByType(department, type, token);
         setProducts(fetchedProducts);
       } catch (error) {
         console.log("error fetching products:", error);
@@ -48,10 +48,10 @@ function Dropdown() {
   useEffect(() => {
     const loadDepartmentsAndTypes = async () => {
       try {
-        const userData = JSON.parse(localStorage.getItem("userData"));
-        const response = await fetchDepartmentsAndTypes(userData.token); // Call the imported function
-        
-        if (response.success) { // Check for success
+        const token=getUserToken();
+        const response = await fetchDepartmentsAndTypes(token);
+
+        if (response.success) {
           setDepartmentsAndTypes(response.data);
           setLoaderStatus(false);
         } else {
@@ -61,14 +61,14 @@ function Dropdown() {
         console.error("Error fetching departments and types:", error);
       }
     };
-    loadDepartmentsAndTypes(); // Call the renamed function
+    loadDepartmentsAndTypes();
   }, []);
   
 
   const handleaddtocart = async (productId) => {
     try {
-      const userData = JSON.parse(localStorage.getItem("userData"));
-      const response = await addToCart(productId, userData.token);
+      const token=getUserToken();
+      const response = await addToCart(productId, token);
       toast.success(response.message);
     } catch (error) {
       console.log("error while adding to cart:", error);
@@ -112,7 +112,7 @@ function Dropdown() {
       sorted.sort((a, b) => b.price - a.price);
     }
 
-    setProducts(sorted); // Update the sorted products in the state
+    setProducts(sorted);
   };
 
   const indexOfLastProduct = currentPage * productsPerPage;
@@ -126,7 +126,6 @@ function Dropdown() {
     <div>
       {loaderStatus ? (
         <div className="loader-container">
-          {/* <PulseLoader loading={loaderStatus} size={50} color="#0aad0a" /> */}
           <MagnifyingGlass
             visible={true}
             height="100"

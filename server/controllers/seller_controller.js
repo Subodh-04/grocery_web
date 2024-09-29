@@ -59,12 +59,16 @@ const getOrderSummary = async (req, res) => {
       "products.seller": req.user._id,
       "products.status": "pending",
     });
-
+    let totalSellerProducts = 0;
     // Format the ordered products
     const orderedProducts = orders.map((order) => {
       // Filter products to include only those from the logged-in seller
       const filteredProducts = order.products.filter(
         (product) => product.seller.toString() === req.user._id.toString()
+      );
+      totalSellerProducts += filteredProducts.reduce(
+        (acc, product) => acc + product.quantity,
+        0
       );
 
       return {
@@ -106,6 +110,7 @@ const getOrderSummary = async (req, res) => {
     res.status(200).json({
       success: true,
       total: TotalOrders,
+      totalSalesProducts:totalSellerProducts,
       completed: Completedorders,
       pending: Pendingorders,
       data: orderedProducts,

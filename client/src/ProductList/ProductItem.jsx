@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import axios from "axios";
+import { fetchProducts, getUserToken } from "../api";
 
 const ProductItem = () => {
   const [products, setProducts] = useState([]);
@@ -13,21 +13,16 @@ const ProductItem = () => {
 
     const getProducts = async () => {
       try {
-        const userData = JSON.parse(localStorage.getItem("userData"));
-        const res = await axios.get("http://localhost:5000/api/product/", {
-          headers: {
-            Authorization: `Bearer ${userData.token}`,
-          },
-        });
 
-        if (Array.isArray(res.data.products)) {
-          const selectedProducts = getRandomProducts(res.data.products, 10);
+        const products = await fetchProducts();
+        if (Array.isArray(products)) {
+          const selectedProducts = getRandomProducts(products, 10);
           setProducts(selectedProducts);
         } else {
           alert("No products found");
         }
       } catch (error) {
-        console.log("Error while fetching products:", error);
+        console.error("Error while fetching products:", error);
       }
     };
 
@@ -36,7 +31,6 @@ const ProductItem = () => {
 
   return (
     <div>
-      {/* Popular Products Start*/}
       <section className="my-lg-14 my-8">
         <div className="container">
           <div className="row">

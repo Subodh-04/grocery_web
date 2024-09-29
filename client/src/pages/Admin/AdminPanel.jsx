@@ -25,6 +25,7 @@ import {
 } from "recharts";
 import { toast } from "react-toastify";
 import "./adminpanel.css";
+import { fetchStoreDetails, fetchUserDetails, getUserToken } from "../../api";
 
 export default function AdminPanel() {
   const [activeSection, setActiveSection] = useState("sales");
@@ -85,7 +86,6 @@ export default function AdminPanel() {
         if (!user) {
           console.log("User not found");
         }
-        console.log("user", user.data);
         setUserDetails((prevDetails) => ({
           ...prevDetails,
           name: user.data.username || "",
@@ -186,7 +186,6 @@ export default function AdminPanel() {
           },
         }
       );
-      console.log("usrs", response.data);
       setUsers(response.data.users);
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -207,7 +206,6 @@ export default function AdminPanel() {
           },
         }
       );
-      console.log("all users:", response.data);
       setUsersData(response.data.users);
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -279,8 +277,6 @@ export default function AdminPanel() {
           },
         })
         .then((response) => {
-          console.log(response);
-
           setSalesData({
             productsCount: response.data.data.productsCount,
             customersCount: response.data.data.customersCount,
@@ -332,6 +328,43 @@ export default function AdminPanel() {
     { name: "Page F", uv: 2390, pv: 3800, amt: 2500 },
     { name: "Page G", uv: 3490, pv: 4300, amt: 2100 },
   ];
+
+  // State to hold selected user details and modal visibility
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [showUserModal, setShowUserModal] = useState(false);
+  const token = getUserToken();
+
+  const handleViewDetails = async (userId) => {
+    try {
+      // Fetch user details first
+      const userDetails = await fetchUserDetails(userId, token);
+
+      // Initialize storeDetails as null
+      let storeDetails = null;
+
+      // Now fetch store details if the user is a seller and has a storeId
+      if (userDetails.role === "seller" && userDetails.storeId) {
+        storeDetails = await fetchStoreDetails(userDetails.storeId, token); // Fetch store details
+      }
+
+      // Combine the user and store details
+      const combinedData = {
+        ...userDetails,
+        storeDetails: storeDetails ? storeDetails.data : null, // Store details will be null if user is not a seller
+      };
+
+      // Set the combined data to state
+      setSelectedUser(combinedData);
+      setShowUserModal(true);
+    } catch (error) {
+      console.error("Error fetching user details:", error);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setSelectedUser(null);
+    setShowUserModal(false);
+  };
 
   return (
     <div className="container-fluid" style={{ position: "fixed" }}>
@@ -427,7 +460,6 @@ export default function AdminPanel() {
                       <option value="all">All Roles</option>
                       <option value="customer">Customer</option>
                       <option value="seller">Seller</option>
-                      <option value="admin">Admin</option>
                     </select>
                   </div>
 
@@ -436,12 +468,12 @@ export default function AdminPanel() {
                     className="row"
                     style={{ maxHeight: "520px", overflowY: "auto" }}
                   >
-                    {filteredUsers.map((user, index) => (
-                      <div className="col-md-4 mb-4" key={user._id}>
+                    {filteredUsers.map((user) => (
+                      <div className="col-md-4 mb-4" key={user.id}>
                         <div className="card h-100 shadow-sm">
                           <div className="card-body">
                             <div className="d-flex justify-content-between align-items-center mb-3">
-                              <h5 className="card-title">{user.userName}</h5>
+                              <h5 className="card-title">{user.username}</h5>
                               <span
                                 className={`badge ${
                                   user.verified
@@ -463,20 +495,105 @@ export default function AdminPanel() {
                             </p>
                           </div>
                           <div className="card-footer d-flex justify-content-between">
-                            <button className="btn btn-sm btn-primary">
+                            <button
+                              className="btn btn-sm btn-primary"
+                              onClick={() => handleViewDetails(user.id)}
+                            >
                               View Details
-                            </button>
-                            <button className="btn btn-sm btn-danger">
-                              Delete
                             </button>
                           </div>
                         </div>
                       </div>
                     ))}
                   </div>
+
+                  {/* User Details Modal */}
+                  {showUserModal && selectedUser && (
+                    <div className="modal show d-block" tabIndex="-1">
+                      <div className="modal-dialog">
+                        <div className="modal-content">
+                          <div className="modal-header">
+                            <h5 className="modal-title">User Details</h5>
+                            <button
+                              type="button"
+                              className="btn-close"
+                              onClick={handleCloseModal}
+                            ></button>
+                          </div>
+                          <div className="modal-body">
+                            <div className="mb-2">
+                              <strong>Name:</strong> {selectedUser.username}
+                            </div>
+                            <div className="mb-2">
+                              <strong>Email:</strong> {selectedUser.email}
+                            </div>
+                            <div className="mb-2">
+                              <strong>Phone:</strong> {selectedUser.phone}
+                            </div>
+
+                            {/* Render address fields if address exists */}
+                            {selectedUser.address &&
+                              selectedUser.address.length > 0 && (
+                                <>
+                                  {selectedUser.address.map((addr) => (
+                                    <div key={addr._id} className="mb-2">
+                                      <strong>Address:</strong> {addr.street},{" "}
+                                      {addr.city}, {addr.state}, {addr.zip},{" "}
+                                      {addr.country}
+                                    </div>
+                                  ))}
+                                </>
+                              )}
+
+                            <div className="mb-2">
+                              <strong>Role:</strong> {selectedUser.role}
+                            </div>
+
+                            {/* Show store details only if user is a seller and storeDetails exists */}
+                            {selectedUser.role === "seller" &&
+                              selectedUser.storeDetails && (
+                                <>
+                                  <div className="mb-2">
+                                    <strong>Store Name:</strong>{" "}
+                                    {selectedUser.storeDetails.storeName}
+                                  </div>
+                                  <div className="mb-2">
+                                    <strong>Store Location:</strong>{" "}
+                                    {selectedUser.storeDetails.storeLocation}
+                                  </div>
+                                  <div className="mb-2">
+                                    <strong>Delivery Options:</strong>{" "}
+                                    {selectedUser.storeDetails.deliveryOptions}
+                                  </div>
+                                  <div className="mb-2">
+                                    <strong>Proximity:</strong>{" "}
+                                    {selectedUser.storeDetails.proximity}
+                                  </div>
+                                  <div className="mb-2">
+                                    <strong>Categories:</strong>{" "}
+                                    {selectedUser.storeDetails.categories.join(
+                                      ", "
+                                    )}
+                                  </div>
+                                </>
+                              )}
+                          </div>
+                          <div className="modal-footer">
+                            <button
+                              type="button"
+                              className="btn btn-secondary"
+                              onClick={handleCloseModal}
+                            >
+                              Close
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </section>
               )}
- 
+
               {activeSection === "sales" && (
                 <section className="container my-4">
                   <h3 className="mb-4 text-primary">Sales Reports</h3>
@@ -631,7 +748,10 @@ export default function AdminPanel() {
                   {verifiedSellers.length > 0 && (
                     <div className="mt-5">
                       <h4 className="mb-3 text-success">Verified Sellers</h4>
-                      <ul className="list-group list-unstyled" style={{maxHeight:"330px",overflowY:"auto"}}>
+                      <ul
+                        className="list-group list-unstyled"
+                        style={{ maxHeight: "330px", overflowY: "auto" }}
+                      >
                         {verifiedSellers.map((user) => (
                           <li
                             key={user._id}
