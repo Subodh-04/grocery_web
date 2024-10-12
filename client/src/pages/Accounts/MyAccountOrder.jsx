@@ -47,13 +47,13 @@ const MyAccountOrder = () => {
               <div className="pt-10 pe-lg-10">
                 <ul className="nav flex-column nav-pills nav-pills-dark">
                   <li className="nav-item">
-                    <Link className="nav-link active" to="/MyAccountOrder">
+                    <Link className="nav-link active" to="/user/MyAccountOrder">
                       <i className="fas fa-shopping-bag me-2" />
                       Your Orders
                     </Link>
                   </li>
                   <li className="nav-item">
-                    <Link className="nav-link" to="/MyAccountSetting">
+                    <Link className="nav-link" to="/user/MyAccountSetting">
                       <i className="fas fa-cog me-2" />
                       Settings
                     </Link>
@@ -99,7 +99,7 @@ const MyAccountOrder = () => {
                               </td>
                               <td>
                                 <Link
-                                  to={`/order-details/${order.orderId}`}
+                                  to={`/user/order-details/${order.orderId}`}
                                   className="btn btn-primary"
                                 >
                                   View Details

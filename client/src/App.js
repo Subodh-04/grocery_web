@@ -39,6 +39,7 @@ import "react-toastify/dist/ReactToastify.css";
 import OrderSuccess from "./pages/PaymentPage/orderSuccess";
 import OrderFailed from "./pages/PaymentPage/orderFailed";
 import OrderDetails from "./pages/Accounts/MyAccountOrderDetails";
+import Protectedroute from "./Component/Protectedroute";
 
 const AppContent = () => {
   const location = useLocation();
@@ -49,7 +50,8 @@ const AppContent = () => {
     location.pathname.startsWith("/reset-password") ||
     location.pathname === "/admin-panel" ||
     location.pathname === "/order-failed" ||
-    location.pathname === "/order-success";
+    location.pathname === "/order-success" ||
+    location.pathname === "/user/";
 
   return (
     <div>
@@ -61,29 +63,14 @@ const AppContent = () => {
         {/* Shop pages */}
         <Route path="/Shop/:department" element={<Shop />} />
         <Route path="/ShopCheckOut" element={<ShopCheckOut />} />
-        <Route path="/ShopCart" element={<ShopCart />} />
         {/* Store pages */}
         <Route path="/StoreList" element={<StoreList />} />
         <Route path="/Single-Store/:id" element={<SingleShop />} />
         {/* Accounts pages */}
-        <Route path="/MyAccountOrder" element={<MyAccountOrder />} />
-        <Route path="/order-details/:orderId" element={<OrderDetails />} />
-        <Route path="/MyAccountSetting" element={<MyAccountSetting />} />
-        <Route
-          path="/MyAccountNotification"
-          element={<MyAcconutNotification />}
-        />
-        <Route path="/MyAccountAddress" element={<MyAccountAddress />} />
-        <Route
-          path="/MyAccountForgetPassword"
-          element={<MyAccountForgetPassword />}
-        />
         <Route path="/MyAccountSignIn" element={<MyAccountSignIn />} />
         <Route path="/MyAccountSignUp" element={<MyAccountSignUp />} />
-        <Route
-          path="/reset-password/:resetToken"
-          element={<MyAccountPasswordReset />}
-        />
+        <Route path="/MyAccountForgetPassword" element={<MyAccountForgetPassword />}/>
+        <Route path="/reset-password/:resetToken" element={<MyAccountPasswordReset />}/>
 
         {/* About pages */}
         <Route path="/Blog" element={<Blog />} />
@@ -97,6 +84,15 @@ const AppContent = () => {
         {/*Payment sucess and failure pages */}
         <Route path="/order-success" element={<OrderSuccess />} />
         <Route path="/order-failed" element={<OrderFailed />} />
+
+        <Route path="/user" element={<Protectedroute />}>
+          <Route path="MyAccountSetting" element={<MyAccountSetting />} />
+          <Route path="MyAccountOrder" element={<MyAccountOrder />} />
+          <Route path="order-details/:orderId" element={<OrderDetails />} />
+          <Route path="MyAccountNotification" element={<MyAcconutNotification />}/>
+          <Route path="MyAccountAddress" element={<MyAccountAddress />} />
+          <Route path="ShopCart" element={<ShopCart />} />
+        </Route>
       </Routes>
 
       {/* Conditionally render Footer */}

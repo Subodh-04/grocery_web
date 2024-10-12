@@ -139,26 +139,26 @@ const MyAccountSetting = () => {
                     <Link
                       className="nav-link"
                       aria-current="page"
-                      to="/MyAccountOrder"
+                      to="/user/MyAccountOrder"
                     >
                       <i className="fas fa-shopping-bag me-2" />
                       Your Orders
                     </Link>
                   </li>
                   <li className="nav-item">
-                    <Link className="nav-link active" to="/MyAccountSetting">
+                    <Link className="nav-link active" to="/user/MyAccountSetting">
                       <i className="fas fa-cog me-2" />
                       Settings
                     </Link>
                   </li>
                   <li className="nav-item">
-                    <Link className="nav-link" to="/MyAccountAddress">
+                    <Link className="nav-link" to="/user/MyAccountAddress">
                       <i className="fas fa-map-marker-alt me-2" />
                       Address
                     </Link>
                   </li>
                   <li className="nav-item">
-                    <Link className="nav-link" to="/MyAccountNotification">
+                    <Link className="nav-link" to="/user/MyAccountNotification">
                       <i className="fas fa-bell me-2" />
                       Notification
                     </Link>

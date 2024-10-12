@@ -37,6 +37,7 @@ const MyAccountSignIn = () => {
           navigate("/admin-panel");
         } else {
           navigate("/Grocery-react/");
+          window.location.reload();
         }
       }
     } catch (error) {

@@ -13,24 +13,34 @@ const Header = () => {
   const [departments, setDepartments] = useState([]);
   const [clickedDepartment, setClickedDepartment] = useState(null);
   const navigate = useNavigate();
-
+  const [logged, setLogged] = useState(false);
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("userData"));
+    if (user) {
+      setLogged(true);
+    }
+  }, [logged]);
   const handleClick = () => {
     setIsOpen(!isOpen);
   };
 
   useEffect(() => {
-    const loadDepartments = async () => {
-      const departmentsData = await fetchDepartments();
-      setDepartments(departmentsData);
-    };
-    loadDepartments();
+    const user = JSON.parse(localStorage.getItem("userData")); // Check for user data in localStorage
+
+    if (user) {
+      // Fetch departments only if user is logged in
+      const loadDepartments = async () => {
+        const departmentsData = await fetchDepartments();
+        setDepartments(departmentsData);
+      };
+      loadDepartments();
+    }
   }, []);
 
   const handleDepartmentClick = (department) => {
     setClickedDepartment(department);
     navigate(`/Shop/${department}`);
   };
-
 
   return (
     <div>
@@ -43,7 +53,7 @@ const Header = () => {
               alt="eCommerce HTML Template"
             />
           </Link>
-          
+
           <button
             className="navbar-toggler"
             type="button"
@@ -102,15 +112,21 @@ const Header = () => {
                     className="dropdown-menu sm-menu"
                     aria-labelledby="navbarDropdown"
                   >
-                    {departments.map((department, index) => (
-                      <button
-                        key={index} // Add a unique key prop for list items
-                        className="dropdown-item"
-                        onClick={() => handleDepartmentClick(department)}
-                      >
-                        {department}
-                      </button>
-                    ))}
+                    {departments && departments.length > 0 ? (
+                      departments.map((department, index) => (
+                        <button
+                          key={index} // Add a unique key prop for list items
+                          className="dropdown-item"
+                          onClick={() => handleDepartmentClick(department)}
+                        >
+                          {department}
+                        </button>
+                      ))
+                    ) : (
+                      <div className="dropdown-item text-muted">
+                        Please log in to see the departments
+                      </div>
+                    )}
                   </div>
                 </li>
               </li>
@@ -156,29 +172,10 @@ const Header = () => {
                 </div>
               </li>
 
-              <li className="nav-item dmenu dropdown">
-                <Link
-                  className="nav-link dropdown-toggle"
-                  to="#"
-                  id="navbarDropdown"
-                  role="button"
-                  data-toggle="dropdown"
-                  aria-haspopup="true"
-                  aria-expanded="false"
-                >
-                  Shop
+              <li className="nav-item">
+                <Link className="nav-link" to="/user/ShopCart">
+                  Cart
                 </Link>
-                <div
-                  className="dropdown-menu sm-menu"
-                  aria-labelledby="navbarDropdown"
-                >
-                  <Link className="dropdown-item" to="/ShopWishList">
-                    Shop Wishlist
-                  </Link>
-                  <Link className="dropdown-item" to="/ShopCart">
-                    Shop Cart
-                  </Link>
-                </div>
               </li>
 
               <li className="nav-item dmenu dropdown">
@@ -255,18 +252,24 @@ const Header = () => {
                       >
                         Forgot Password
                       </Link>
-                      <Link className="dropdown-item" to="/MyAccountOrder">
+                      <Link className="dropdown-item" to="/user/MyAccountOrder">
                         Orders
                       </Link>
-                      <Link className="dropdown-item" to="/MyAccountSetting">
+                      <Link
+                        className="dropdown-item"
+                        to="/user/MyAccountSetting"
+                      >
                         Settings
                       </Link>
-                      <Link className="dropdown-item" to="/MyAccountAddress">
+                      <Link
+                        className="dropdown-item"
+                        to="/user/MyAccountAddress"
+                      >
                         Address
                       </Link>
                       <Link
                         className="dropdown-item"
-                        to="/MyAccountNotification"
+                        to="/user/MyAccountNotification"
                       >
                         Notification
                       </Link>

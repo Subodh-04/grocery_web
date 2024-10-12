@@ -221,7 +221,7 @@ const MyAccountAddress = () => {
                         <Link
                           className="nav-link "
                           aria-current="page"
-                          to="/MyAccountOrder"
+                          to="/user/MyAccountOrder"
                         >
                           <i className="fas fa-shopping-bag me-2" />
                           Your Orders
@@ -229,7 +229,7 @@ const MyAccountAddress = () => {
                       </li>
                       {/* nav item */}
                       <li className="nav-item">
-                        <Link className="nav-link " to="/MyAccountSetting">
+                        <Link className="nav-link " to="/user/MyAccountSetting">
                           <i className="fas fa-cog me-2" />
                           Settings
                         </Link>
@@ -238,7 +238,7 @@ const MyAccountAddress = () => {
                       <li className="nav-item">
                         <Link
                           className="nav-link active"
-                          to="/MyAccountAddress"
+                          to="/user/MyAccountAddress"
                         >
                           <i className="fas fa-map-marker-alt me-2" />
                           Address
@@ -246,7 +246,7 @@ const MyAccountAddress = () => {
                       </li>
                       {/* nav item */}
                       <li className="nav-item">
-                        <Link className="nav-link" to="/MyAccountNotification">
+                        <Link className="nav-link" to="/user/MyAccountNotification">
                           <i className="fas fa-bell me-2" />
                           Notification
                         </Link>
@@ -642,7 +642,7 @@ const MyAccountAddress = () => {
                   <a
                     className="nav-link active"
                     aria-current="page"
-                    href="/MyAccountOrder"
+                    href="/user/MyAccountOrder"
                   >
                     <i className="fas fa-shopping-bag me-2" />
                     Your Orders
@@ -650,28 +650,28 @@ const MyAccountAddress = () => {
                 </li>
                 {/* nav item */}
                 <li className="nav-item">
-                  <a className="nav-link " href="/MyAccountSetting">
+                  <a className="nav-link " href="/user/MyAccountSetting">
                     <i className="fas fa-cog me-2" />
                     Settings
                   </a>
                 </li>
                 {/* nav item */}
                 <li className="nav-item">
-                  <a className="nav-link" href="/MyAccountAddress">
+                  <a className="nav-link" href="/user/MyAccountAddress">
                     <i className="fas fa-map-marker-alt me-2" />
                     Address
                   </a>
                 </li>
                 {/* nav item */}
                 <li className="nav-item">
-                  <a className="nav-link" href="/MyAccountPaymentMethod">
+                  <a className="nav-link" href="/user/MyAccountPaymentMethod">
                     <i className="fas fa-credit-card me-2" />
                     Payment Method
                   </a>
                 </li>
                 {/* nav item */}
                 <li className="nav-item">
-                  <a className="nav-link" href="/MyAccountNotification">
+                  <a className="nav-link" href="/user/MyAccountNotification">
                     <i className="fas fa-bell me-2" />
                     Notification
                   </a>

@@ -7,7 +7,7 @@ const PaymentSuccess = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      navigate("/MyAccountOrder");
+      navigate("/user/MyAccountOrder");
     }, 3000);
 
     return () => clearTimeout(timer);

@@ -349,16 +349,15 @@ const Home = () => {
                                 Welcome to FreshFinds
                               </h1>
                               <span>
-                                Download the app get free food &amp;{" "}
-                                <span className="text-primary">$30</span> off on
-                                your first order.
+                                Enjoy fresh and organic products delivered to
+                                your doorstep.
                               </span>
                             </div>
                           </div>
                           <div className="mt-3 mt-lg-0">
                             {/* btn */}
-                            <Link to="#" className="btn btn-dark">
-                              Download FreshFinds App
+                            <Link to="/store" className="btn btn-dark">
+                              Start Shopping Now
                             </Link>
                           </div>
                         </div>
@@ -535,7 +534,10 @@ const Home = () => {
                               {/* text */}
                               <h5 className="fs-6 mb-0">
                                 {" "}
-                                <Link to="/Shop/Vegetables" className="text-inherit">
+                                <Link
+                                  to="/Shop/Vegetables"
+                                  className="text-inherit"
+                                >
                                   Fruits &amp; Vegetables
                                 </Link>
                               </h5>
@@ -559,7 +561,10 @@ const Home = () => {
                             <div className="mt-4">
                               <h5 className="fs-6 mb-0">
                                 {" "}
-                                <Link to="/Shop/Snacks" className="text-inherit">
+                                <Link
+                                  to="/Shop/Snacks"
+                                  className="text-inherit"
+                                >
                                   Snack &amp; Munchies
                                 </Link>
                               </h5>
@@ -583,7 +588,10 @@ const Home = () => {
                             <div className="mt-4">
                               <h5 className="fs-6 mb-0">
                                 {" "}
-                                <Link to="/Shop/Bakery" className="text-inherit">
+                                <Link
+                                  to="/Shop/Bakery"
+                                  className="text-inherit"
+                                >
                                   Bakery &amp; Biscuits
                                 </Link>
                               </h5>
@@ -607,7 +615,10 @@ const Home = () => {
                             <div className="mt-4">
                               <h5 className="fs-6 mb-0">
                                 {" "}
-                                <Link to="/Shop/Household Items" className="text-inherit">
+                                <Link
+                                  to="/Shop/Household Items"
+                                  className="text-inherit"
+                                >
                                   Household Items
                                 </Link>
                               </h5>
@@ -630,7 +641,10 @@ const Home = () => {
                             {/* text */}
                             <div className="mt-4">
                               <h5 className="fs-6 mb-0">
-                                <Link to="/Shop/Grocery" className="text-inherit">
+                                <Link
+                                  to="/Shop/Grocery"
+                                  className="text-inherit"
+                                >
                                   Tea, Coffee &amp; Drinks
                                 </Link>
                               </h5>
@@ -653,7 +667,10 @@ const Home = () => {
                             {/* text */}
                             <div className="mt-4">
                               <h5 className="fs-6 mb-0">
-                                <Link to="/Shop/Drinks" className="text-inherit">
+                                <Link
+                                  to="/Shop/Drinks"
+                                  className="text-inherit"
+                                >
                                   Cold Drinks &amp; Juices
                                 </Link>
                               </h5>
@@ -676,7 +693,10 @@ const Home = () => {
                             {/* text */}
                             <div className="mt-4">
                               <h5 className="fs-6 mb-0">
-                                <Link to="/Shop/Non-Veg" className="text-inherit">
+                                <Link
+                                  to="/Shop/Non-Veg"
+                                  className="text-inherit"
+                                >
                                   Chicken, Meat &amp; Fish
                                 </Link>
                               </h5>
@@ -862,24 +882,87 @@ const Home = () => {
                   }}
                 >
                   {/* row */}
-                  <div className="row align-items-center text-center justify-content-center">
-                    <div className="col-lg-6 col-md-6 fade-in-left">
+                  <div className="row align-items-center justify-content-center text-center">
+                    {/* Left side (Text & Buttons) */}
+                    <div className="col-lg-6 col-md-8 fade-in-left">
                       <Slide direction="left">
                         <div className="mb-6">
                           <div className="mb-7">
-                            {/* heading */}
+                            {/* Heading */}
                             <h1>Choose Your Role</h1>
                             <h5 className="mb-0">
                               Log in or sign up to get started with FreshFinds!
                             </h5>
                           </div>
+
+                          {/* Role Boxes */}
+                          <div className="row mt-5">
+                            {/* Customer Role */}
+                            <div className="col-lg-5 col-md-6 mb-4 mx-auto">
+                              <Zoom>
+                                <div className="login-box p-4 shadow-sm">
+                                  <p className="fs-4 fw-semibold font-monospace">
+                                    Customer
+                                  </p>
+                                  <button
+                                    className="btn btn-primary w-100 mb-2"
+                                    onClick={() =>
+                                      (window.location.href =
+                                        "/MyAccountSignIn")
+                                    }
+                                  >
+                                    Login as Customer
+                                  </button>
+                                  <button
+                                    className="btn btn-secondary w-100"
+                                    onClick={() => {
+                                      window.location.href = "/MyAccountSignUp";
+                                      handleRole("customer");
+                                    }}
+                                  >
+                                    Sign Up as Customer
+                                  </button>
+                                </div>
+                              </Zoom>
+                            </div>
+
+                            {/* Seller Role */}
+                            <div className="col-lg-5 col-md-6 mb-4 mx-auto">
+                              <Zoom>
+                                <div className="login-box p-4 shadow-sm">
+                                  <p className="fs-4 fw-semibold font-monospace">
+                                    Seller
+                                  </p>
+                                  <button
+                                    className="btn btn-primary w-100 mb-2"
+                                    onClick={() =>
+                                      (window.location.href =
+                                        "/MyAccountSignIn")
+                                    }
+                                  >
+                                    Login as Seller
+                                  </button>
+                                  <button
+                                    className="btn btn-secondary w-100"
+                                    onClick={() => {
+                                      window.location.href = "/MyAccountSignUp";
+                                      handleRole("seller");
+                                    }}
+                                  >
+                                    Sign Up as Seller
+                                  </button>
+                                </div>
+                              </Zoom>
+                            </div>
+                          </div>
                         </div>
                       </Slide>
                     </div>
 
-                    <div className="offset-lg-2 col-lg-4 col-md-6 fade-zoom">
+                    {/* Right side (Image) */}
+                    <div className="col-lg-4 col-md-6 offset-lg-1 fade-zoom">
                       <Slide direction="right">
-                        <div className="text-lg-start">
+                        <div className="text-center">
                           <img
                             src={iphone}
                             alt="iphone"
@@ -891,73 +974,6 @@ const Home = () => {
                   </div>
 
                   {/* New Section for Login/Signup */}
-                  <div className="row text-center justify-content-center mt-5">
-                    <div className="col-lg-3 col-md-4 mb-4">
-                      <Zoom>
-                        <div className="login-box">
-                          <h3>Customer Login/Signup</h3>
-                          <button
-                            className="btn btn-primary w-100"
-                            onClick={() =>
-                              (window.location.href = "/MyAccountSignIn")
-                            }
-                          >
-                            Login as Customer
-                          </button>
-                          <button
-                            className="btn btn-secondary w-100 mt-2"
-                            onClick={() => {
-                              window.location.href = "/MyAccountSignUp";
-                              handleRole("customer");
-                            }}
-                          >
-                            Sign Up as Customer
-                          </button>
-                        </div>
-                      </Zoom>
-                    </div>
-
-                    <div className="col-lg-3 col-md-4 mb-4">
-                      <Zoom>
-                        <div className="login-box">
-                          <h3>Seller Login/Signup</h3>
-                          <button
-                            className="btn btn-primary w-100"
-                            onClick={() =>
-                              (window.location.href = "/MyAccountSignIn")
-                            }
-                          >
-                            Login as Seller
-                          </button>
-                          <button
-                            className="btn btn-secondary w-100 mt-2"
-                            onClick={() => {
-                              window.location.href = "/MyAccountSignUp";
-                              handleRole("seller");
-                            }}
-                          >
-                            Sign Up as Seller
-                          </button>
-                        </div>
-                      </Zoom>
-                    </div>
-
-                    <div className="col-lg-3 col-md-4 mb-4">
-                      <Zoom>
-                        <div className="login-box">
-                          <h3>Admin Login</h3>
-                          <button
-                            className="btn btn-primary w-100"
-                            onClick={() =>
-                              (window.location.href = "/MyAccountSignIn")
-                            }
-                          >
-                            Login as Admin
-                          </button>
-                        </div>
-                      </Zoom>
-                    </div>
-                  </div>
                 </div>
               </section>
             </>
@@ -1483,12 +1499,13 @@ const Home = () => {
                               </div>
                             </div>
                             <div className="icon-content">
-                              <h3 className="h5 mb-3">Easy Returns</h3>
+                              <h3 className="h5 mb-3">
+                                Fresh and Organic Products
+                              </h3>
                               <p>
-                                Not satisfied with a product? Return it at the
-                                doorstep &amp; get a refund within hours. No
-                                questions asked
-                                <Link to="#!">policy</Link>.
+                                We ensure that products delivered to your
+                                doorstep are fresh & organic, sourced directly
+                                from trusted suppliers for best quality.
                               </p>
                             </div>
                           </div>
